@@ -1,0 +1,5 @@
+interface:
+  display_name: "Plugin Creator"
+  short_description: "Scaffold a wanlaicode plugin and marketplace entry"
+  icon_small: "./assets/plugin-creator-small.svg"
+  icon_large: "./assets/plugin-creator.png"

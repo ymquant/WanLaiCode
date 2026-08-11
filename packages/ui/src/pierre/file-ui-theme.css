@@ -1,0 +1,97 @@
+/* Monokai file UI colors — sourced from Monokai-Light.jsonc / Monokai-Dark.jsonc */
+
+html[data-color-scheme="light"] {
+  --file-editor-background: var(--background-base);
+  --file-editor-foreground: #29242a;
+  --file-line-number: #bfb9ba;
+  --file-line-number-active: #706b6e;
+
+  --file-syntax-comment: #a59fa0;
+  --file-syntax-keyword: #e14775;
+  --file-syntax-string: #cc7a0a;
+  --file-syntax-constant: #7058be;
+  --file-syntax-function: #269d69;
+  --file-syntax-type: #1c8ca8;
+  --file-syntax-variable: #29242a;
+  --file-syntax-punctuation: #918c8e;
+  --file-syntax-operator: #e14775;
+  --file-syntax-property: #29242a;
+  --file-syntax-primitive: #269d69;
+  --file-syntax-tag: #e14775;
+  --file-syntax-attribute: #1c8ca8;
+  --file-syntax-regexp: #cc7a0a;
+  --file-syntax-object: #29242a;
+  --file-syntax-critical: #e14775;
+  --file-syntax-info: #1c8ca8;
+  --file-syntax-warning: #e16032;
+  --file-syntax-unknown: #918c8e;
+  --file-syntax-diff-add: #269d69;
+  --file-syntax-diff-delete: #e14775;
+
+  --diffs-custom-bg: var(--background-base);
+  --diffs-column-number-bg: var(--background-base);
+  --diffs-addition-color-override: #269d69;
+  --diffs-deletion-color-override: #e14775;
+  /* change-addition background (ref image, more translucent feel) */
+  --diffs-bg-addition-override: #eaf7ee;
+  --diffs-bg-addition-number-override: #def2e4;
+  --diffs-bg-addition-hover-override: #d4eddc;
+  /* change-deletion background (ref image) */
+  --diffs-bg-deletion-override: #fee6e3;
+  --diffs-bg-deletion-number-override: #fddad6;
+  --diffs-bg-deletion-hover-override: #fdd0cb;
+  --diffs-bg-addition-emphasis-override: #eaf7ee;
+  --diffs-bg-deletion-emphasis-override: #fee6e3;
+  --diffs-bg-selection-override: #706b6e26;
+  --diffs-bg-selection-number-override: #706b6e33;
+  --diffs-selection-border: #a59fa0;
+  --diffs-selection-number-fg: #29242a;
+}
+
+html[data-color-scheme="dark"] {
+  --file-editor-background: var(--background-base);
+  --file-editor-foreground: #f7f1ff;
+  --file-line-number: #525053;
+  --file-line-number-active: #bab6c0;
+
+  --file-syntax-comment: #69676c;
+  --file-syntax-keyword: #fc618d;
+  --file-syntax-string: #fce566;
+  --file-syntax-constant: #948ae3;
+  --file-syntax-function: #7bd88f;
+  --file-syntax-type: #5ad4e6;
+  --file-syntax-variable: #f7f1ff;
+  --file-syntax-punctuation: #8b888f;
+  --file-syntax-operator: #fc618d;
+  --file-syntax-property: #f7f1ff;
+  --file-syntax-primitive: #7bd88f;
+  --file-syntax-tag: #fc618d;
+  --file-syntax-attribute: #5ad4e6;
+  --file-syntax-regexp: #fce566;
+  --file-syntax-object: #f7f1ff;
+  --file-syntax-critical: #fc618d;
+  --file-syntax-info: #5ad4e6;
+  --file-syntax-warning: #fd9353;
+  --file-syntax-unknown: #8b888f;
+  --file-syntax-diff-add: #7bd88f;
+  --file-syntax-diff-delete: #fc618d;
+
+  --diffs-custom-bg: var(--background-base);
+  --diffs-column-number-bg: var(--background-base);
+  --diffs-addition-color-override: #7bd88f;
+  --diffs-deletion-color-override: #fc618d;
+  /* change-addition background (ref image, more translucent feel) */
+  --diffs-bg-addition-override: #243a2e;
+  --diffs-bg-addition-number-override: #1f3228;
+  --diffs-bg-addition-hover-override: #2b4536;
+  /* change-deletion background (ref image) */
+  --diffs-bg-deletion-override: #3f1f1a;
+  --diffs-bg-deletion-number-override: #351a16;
+  --diffs-bg-deletion-hover-override: #4a251f;
+  --diffs-bg-addition-emphasis-override: #243a2e;
+  --diffs-bg-deletion-emphasis-override: #3f1f1a;
+  --diffs-bg-selection-override: #bab6c026;
+  --diffs-bg-selection-number-override: #bab6c040;
+  --diffs-selection-border: #69676c;
+  --diffs-selection-number-fg: #f7f1ff;
+}

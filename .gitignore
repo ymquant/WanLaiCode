@@ -1,0 +1,53 @@
+.DS_Store
+__pycache__/
+node_modules
+.worktrees
+.sst
+.env
+.idea
+.vscode
+.codex
+*~
+playground
+tmp
+dist
+ts-dist
+.turbo
+.artifacts/
+**/.serena
+.serena/
+/result
+refs
+Session.vim
+/opencode.json
+a.out
+target
+.scripts
+.direnv/
+
+# Local dev files
+opencode-dev
+UPCOMING_CHANGELOG.md
+logs/
+*.bun-build
+tsconfig.tsbuildinfo
+
+# 本地 brainstorming/spec 草稿，不入仓库
+docs/superpowers/
+.superpowers/
+
+# 本地 .agents/ 技能，不入仓库
+.agents/
+
+# 本地开发身份与归属审计文件包含个人信息，禁止提交到仓库
+/docs/development-ownership-audit.md
+/.github/module-owners.md
+
+# Claude Code 本地状态
+.claude/
+
+pr.md
+.playwright-mcp/
+
+# CI 生成的 per-version 测试执行单（artifact，不入库）
+release-test-*.xlsx

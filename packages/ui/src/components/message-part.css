@@ -1,0 +1,2549 @@
+/* 必须带 contain-intrinsic-size：只写 content-visibility: auto 会让离屏元素高度塌成 0，
+   用户向上滚动阅读时下方消息一离开视口就整体位移。auto 关键字让浏览器记住实测高度，
+   首次渲染后即为真实值。 */
+[data-component="assistant-message"] {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 200px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+/* 整轮（turn）级跳过离屏布局/绘制；auto + 估算高度让浏览器记住实测高度，
+   离屏 turn 不参与首帧布局，打开/切换会话时只有视口内的轮次付渲染成本。
+
+   两处豁免，缺一不可：
+   - 活跃流式轮（data-active）：滚出视口也要持续布局，否则流式高度被估值冻结。
+   - 最新一轮（data-latest）：回合结束时 data-active 翻成 false，若同一帧套用
+     contain-intrinsic-size，浏览器此刻还没有这个属性下的 last remembered size
+     （该尺寸只在元素「带着这两个属性且未被跳过渲染」时才记录，而豁免期内它们根本
+     不存在），只能取 280px 估值 —— 一轮真实高度可达数千 px，会当场塌陷，
+     scrollTop 随即被夹到新上限，表现为视口猛地窜走。
+     推迟到「不再是最新轮」并不能让浏览器提前记住尺寸，真正的保障是那一刻的时机：
+     它由下一条用户消息触发，而该轮此时必定在视口内或视口下方 —— 它是倒数第二个元素，
+     后面只跟着一个矮小的用户气泡。相交时 content-visibility 不跳过它，在同一次布局里
+     完成渲染与尺寸记录；整个位于视口下方时塌陷只缩短滚动条总高，不触发 scrollTop 夹取。
+     两种情况都不移动视口。（从 composer 发送会 resumeScroll 拉回底部，属前一种；
+     排队 follow-up 自动发送与用户正在上方阅读时不回底部，属后一种。）
+     外层 wrapper 的同名豁免见 timeline-turn-anchor.tsx。 */
+[data-component="session-turn"]:not([data-active="true"]):not([data-latest="true"]) {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 280px;
+}
+
+[data-component="skill-chip"] {
+  appearance: none;
+  display: inline-flex;
+  min-height: 20px;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-interactive-base);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-small);
+  font-style: normal;
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-large);
+  letter-spacing: var(--letter-spacing-normal);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+[data-component="skill-chip"] [data-slot="skill-chip-icon"] {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+[data-component="skill-chip"] [data-slot="skill-chip-label"] {
+  min-width: 0;
+}
+
+[data-component="skill-chip"]:not([aria-disabled="true"]):hover {
+  background: transparent;
+  color: var(--text-interactive-stronger);
+}
+
+[data-component="skill-chip"][aria-disabled="true"] {
+  cursor: default;
+}
+
+[data-component="assistant-file-part"] {
+  width: min(100%, 760px);
+  max-width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--surface-weak);
+  border: 1px solid var(--border-weak-base);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+
+  &[data-clickable] {
+    cursor: pointer;
+  }
+
+  &[data-type="file"] {
+    width: min(100%, 420px);
+  }
+
+  /* 占位必须与图片落地后的盒子同宽同比，否则加载完成瞬间的高度差会把下方内容整体推走。
+     带 data-loading 的占位只由 provider 的 generateIntoSession 产出，成图同样是顶层
+     file part（不是 image_generation 工具的 attachment），因此落地就在本组件的图片态、
+     宽度 760px —— 不要拿 GeneratedImageGallery 的 400px 来对齐，那是另一条流程。
+     生图默认 1024x1024，故按方形预留；请求非方形 size 时仍有偏差，
+     provider 的 imageLoadingUrl 已按 size 算好 viewBox，但占位渲染的是空 div 未用上。 */
+  &[data-loading] {
+    width: min(100%, 760px);
+    aspect-ratio: 1;
+    position: relative;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+}
+
+[data-slot="assistant-file-image"] {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* 占位的移除与成图的插入是两条独立的 store 事件，中间存在图片尚未解码的一帧。
+     没有比例提示时这一帧盒高为 0，整轮少掉一屏高度再涨回来。
+     auto 1 / 1：有自然比例就用自然比例，没有（未解码）时回退方形 —— 与占位的
+     aspect-ratio: 1 同比。
+     宽图（如 2000x600）终态高度低于方形占位，无论加不加这行都要收缩同样的量；
+     区别在于不加时会先塌到 0 再涨回去（-760 后 +228），加了则一步到位（-532）。
+     单调一步优于来回抖动，所以对非方形也成立。 */
+  aspect-ratio: auto 1 / 1;
+  object-fit: contain;
+}
+
+[data-slot="assistant-file-loading"] {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--assistant-file-loading-bg);
+  border: 1px solid var(--assistant-file-loading-border);
+  box-shadow: 0 1px 2px var(--assistant-file-loading-shadow);
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  &::before {
+    opacity: 0.5;
+    background-image: radial-gradient(circle, var(--assistant-file-loading-dot) 1.2px, transparent 1.4px);
+    background-size: 22px 22px;
+  }
+
+  &::after {
+    transform: translateX(-110%);
+    background: linear-gradient(90deg, transparent 0%, var(--assistant-file-loading-shine) 50%, transparent 100%);
+    animation: assistant-file-loading-shine 1.8s ease-in-out infinite;
+  }
+}
+
+:root[data-color-scheme="light"] [data-slot="assistant-file-loading"] {
+  --assistant-file-loading-bg: rgb(255, 255, 255);
+  --assistant-file-loading-border: rgba(0, 0, 0, 0.08);
+  --assistant-file-loading-shadow: rgba(0, 0, 0, 0.08);
+  --assistant-file-loading-dot: rgba(0, 0, 0, 0.12);
+  --assistant-file-loading-shine: rgba(0, 0, 0, 0.04);
+}
+
+:root[data-color-scheme="dark"] [data-slot="assistant-file-loading"] {
+  --assistant-file-loading-bg: rgb(0, 0, 0);
+  --assistant-file-loading-border: rgba(255, 255, 255, 0.1);
+  --assistant-file-loading-shadow: rgba(0, 0, 0, 0.28);
+  --assistant-file-loading-dot: rgba(255, 255, 255, 0.18);
+  --assistant-file-loading-shine: rgba(255, 255, 255, 0.08);
+}
+
+@keyframes assistant-file-loading-shine {
+  to {
+    transform: translateX(110%);
+  }
+}
+
+[data-slot="assistant-file-card"] {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  color: var(--text-base);
+
+  [data-component="file-icon"] {
+    width: 22px;
+    height: 22px;
+    flex: none;
+  }
+}
+
+[data-slot="assistant-file-name"] {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-large);
+}
+
+[data-component="user-message"] {
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-base);
+  font-style: normal;
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-large);
+  letter-spacing: var(--letter-spacing-normal);
+  color: var(--text-strong);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  align-self: stretch;
+  width: 100%;
+  max-width: 100%;
+  gap: 0;
+
+  [data-slot="user-message-automation-badge"] {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    color: var(--text-weak);
+    font-size: var(--font-size-small);
+    line-height: 1;
+
+    svg {
+      flex-shrink: 0;
+      color: var(--text-weak);
+    }
+  }
+
+  [data-slot="user-message-attachments"] {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    width: fit-content;
+    max-width: min(82%, 64ch);
+    margin-left: auto;
+  }
+
+  [data-slot="user-message-attachment-row"] {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    max-width: 100%;
+  }
+
+  [data-slot="user-message-attachment"] {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: default;
+    transition:
+      border-color 0.15s ease,
+      opacity 0.3s ease;
+
+    &[data-clickable] {
+      cursor: pointer;
+    }
+
+    &[data-type="image"] {
+      width: 72px;
+      height: 72px;
+    }
+
+    &[data-type="file"] {
+      width: fit-content;
+      max-width: 100%;
+    }
+  }
+
+  [data-slot="user-message-attachment-image"] {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  [data-slot="user-message-attachment-icon"] {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--icon-weak);
+
+    [data-component="icon"] {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  [data-slot="user-message-attachment-file"] {
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    [data-component="file-icon"] {
+      width: 20px;
+      height: 20px;
+      flex: none;
+    }
+  }
+
+  [data-slot="user-message-attachment-name"] {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-base);
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-large);
+  }
+
+  [data-slot="user-message-body"] {
+    width: fit-content;
+    max-width: min(82%, 64ch);
+    margin-left: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  [data-slot="user-message-attachments"]+[data-slot="user-message-row"],
+  [data-slot="user-message-attachments"]+[data-slot="user-message-body"] {
+    margin-top: 12px;
+  }
+
+  [data-slot="user-message-text-wrap"] {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 100%;
+  }
+
+  [data-slot="user-message-text"] {
+    position: relative;
+    display: inline-block;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow: hidden;
+    background: var(--surface-base);
+    border: 1px solid var(--border-weak-base);
+    padding: 8px 12px;
+    border-radius: 6px;
+
+    &:has([data-slot="user-message-expand-toggle"]) {
+      padding-bottom: 38px;
+    }
+
+    &[data-collapsed="true"] {
+      max-height: 260px;
+    }
+
+    &[data-collapsed="true"]::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1;
+      height: 38px;
+      pointer-events: none;
+      background: var(--surface-base);
+    }
+
+    &[data-collapsed="true"]::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 38px;
+      z-index: 1;
+      height: 48px;
+      pointer-events: none;
+      background: linear-gradient(to bottom, transparent, var(--surface-base));
+    }
+
+    [data-highlight="file"] {
+      color: var(--syntax-property);
+    }
+
+    [data-highlight="agent"] {
+      color: var(--syntax-type);
+    }
+
+    /* 插件 mention chip —— 与 Codex 对齐 `[@name](plugin://addon@market)` 形态。
+       resolvePluginMeta 命中时 inline 注入 logo + 品牌色;miss 时降级为带颜色的 @name。 */
+    [data-highlight="plugin"] {
+      color: var(--syntax-type);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    /* 与编辑器侧 (prompt-input) 统一: chip 整体保持 inline,文字自然参与正文基线;
+       logo 用 inline-block + vertical-align 微调,避免 inline-flex 的合成 baseline
+       落到容器底边导致 chip 相对正文整体抬高 (文字不对齐)。 */
+    [data-highlight="plugin"] [data-slot="plugin-chip-logo"] {
+      display: inline-block;
+      vertical-align: -0.2em;
+      width: 14px;
+      height: 14px;
+      margin-right: 4px;
+      border-radius: 3px;
+      object-fit: cover;
+    }
+
+    /* 注入 openPluginDetail 时 chip 可点击跳转插件详情页;未注入则保持纯展示。 */
+    [data-highlight="plugin"][data-clickable] {
+      cursor: pointer;
+    }
+
+    [data-highlight="skill"] {
+      cursor: pointer;
+    }
+
+    [data-highlight="conversation"] {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--text-interactive-base);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    [data-highlight="conversation"][data-clickable] {
+      cursor: pointer;
+    }
+
+    [data-highlight="conversation"] [data-component="icon"] {
+      flex: none;
+    }
+
+    /* 已发送 Prompt 的网页和文件引用复用输入框的蓝色交互语义，同时保留用户气泡原有字号与行高。 */
+    [data-highlight="prompt-link"] {
+      appearance: none;
+      display: inline-flex;
+      max-width: 100%;
+      align-items: baseline;
+      gap: 0.25rem;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--text-interactive-base);
+      font: inherit;
+      line-height: inherit;
+      text-align: left;
+      vertical-align: baseline;
+      cursor: pointer;
+      user-select: text;
+
+      &[data-kind="link"] {
+        text-decoration: underline;
+        text-decoration-color: color-mix(in srgb, var(--text-interactive-base) 72%, transparent);
+        text-underline-offset: 2px;
+      }
+
+      &[data-kind="file"] {
+        text-decoration: none;
+      }
+
+      &:hover {
+        color: color-mix(in srgb, var(--text-interactive-base) 82%, var(--text-strong));
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--border-focus-base);
+        outline-offset: 2px;
+        border-radius: 2px;
+      }
+
+      [data-component="icon"] {
+        width: 1em;
+        height: 1em;
+        flex: 0 0 auto;
+        color: inherit;
+        vertical-align: -0.16em;
+      }
+
+      [data-slot="user-message-prompt-link-label"] {
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+    }
+
+    max-width: 100%;
+  }
+
+  [data-slot="user-message-expand-toggle"] {
+    appearance: none;
+    position: absolute;
+    left: 12px;
+    bottom: 8px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text-weak);
+    font-family: var(--font-family-sans);
+    font-size: var(--font-size-small);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-large);
+    cursor: pointer;
+    transition: color 0.15s ease;
+
+    [data-component="icon"] {
+      width: 14px;
+      height: 14px;
+      transition: transform 0.15s ease;
+    }
+
+    &[aria-expanded="true"] [data-component="icon"] {
+      transform: rotate(180deg);
+    }
+
+    &:hover {
+      color: var(--text-base);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--border-focus-base);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+  }
+
+  [data-slot="user-message-copy-wrapper"] {
+    min-height: 24px;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    width: 100%;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+    will-change: opacity;
+
+    [data-component="tooltip-trigger"] {
+      display: inline-flex;
+      width: fit-content;
+    }
+  }
+
+  [data-slot="user-message-meta"] {
+    user-select: none;
+    text-align: right;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  [data-slot="user-message-meta-wrap"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    overflow: hidden;
+    gap: 0;
+  }
+
+  [data-slot="user-message-meta-tail"] {
+    user-select: none;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    text-align: right;
+  }
+
+  &:hover [data-slot="user-message-copy-wrapper"],
+  &:focus-within [data-slot="user-message-copy-wrapper"] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* 气泡与撤销按钮同一行，× 常驻在气泡右侧 */
+  [data-slot="user-message-row"] {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    width: 100%;
+  }
+
+  [data-slot="user-message-cancel"] {
+    flex: none;
+    display: inline-flex;
+  }
+
+  /* 排队中(已发送、还没开始处理)的消息：气泡灰显 */
+  &[data-state="queued"] [data-slot="user-message-text"] {
+    opacity: 0.5;
+  }
+
+  .text-text-strong {
+    color: var(--text-strong);
+  }
+
+  .font-medium {
+    font-weight: var(--font-weight-medium);
+  }
+}
+
+/* Codex-style chat tweaks (scoped) */
+[data-ui="codex-chat"] {
+  [data-component="user-message"] {
+    [data-slot="user-message-body"] {
+      max-width: min(78%, 72ch);
+    }
+
+    [data-slot="user-message-attachments"] {
+      max-width: min(78%, 72ch);
+    }
+
+    [data-slot="user-message-attachment-row"] {
+      max-width: 100%;
+    }
+
+    [data-slot="user-message-text"] {
+      border-radius: 12px;
+      padding: 8px 12px;
+      /* 1:1 复刻 Codex：浅色 #F4F5F5，深色 #1E1E1E（在 #151515 背景上微浮） */
+      background: light-dark(#F4F5F5, #1E1E1E);
+      border: none;
+      box-shadow: none;
+
+      &:has([data-slot="user-message-expand-toggle"]) {
+        padding-bottom: 38px;
+      }
+
+      &[data-collapsed="true"]::before {
+        background: light-dark(#F4F5F5, #1E1E1E);
+      }
+
+      &[data-collapsed="true"]::after {
+        background: linear-gradient(to bottom, transparent, light-dark(#F4F5F5, #1E1E1E));
+      }
+    }
+  }
+
+  [data-component="assistant-message"] {
+    gap: 10px;
+  }
+
+  [data-component="assistant-message"] [data-component="text-part"],
+  [data-component="assistant-message"] [data-component="tool-output"] {
+    max-width: min(92%, 72ch);
+  }
+
+  [data-component="assistant-message"] [data-component="tool-output"] {
+    border-radius: 12px;
+    border: 1px solid var(--border-weaker-base);
+    background: var(--surface-weak);
+    box-shadow: var(--shadow-xs-border-base);
+    padding: 12px 14px;
+  }
+
+  [data-component="text-part"] {
+    margin-top: 18px;
+  }
+
+  [data-component="tool-output"] {
+    margin-bottom: 18px;
+  }
+
+  [data-component="bash-output"] {
+    border-radius: 12px;
+    border-color: var(--border-weaker-base);
+    background: var(--surface-raised-stronger-non-alpha);
+    box-shadow: var(--shadow-xs-border-base);
+  }
+
+  /* Shell 与 Markdown 代码块共用 --markdown-code-background */
+  [data-component="bash-output"][data-variant="codex-activity"] {
+    background: var(--markdown-code-background);
+    box-shadow: none;
+    border: 1px solid var(--border-weaker-base);
+  }
+}
+
+[data-component="text-part"] {
+  width: 100%;
+  margin-top: 24px;
+
+  [data-slot="text-part-body"] {
+    margin-top: 0;
+  }
+}
+
+/* 同 turn 内相邻 text-part 之间不要额外加 24px，使其看起来像同一段连续正文 */
+[data-component="text-part"] + [data-component="text-part"] {
+  margin-top: 0;
+}
+
+/* 整个 user turn 的 assistant 内容尾部工具条（Copy / Fork / meta） */
+[data-slot="session-turn-assistant-footer"] {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  will-change: opacity;
+}
+
+[data-slot="session-turn-assistant-footer"] [data-component="tooltip-trigger"] {
+  display: inline-flex;
+  width: fit-content;
+}
+
+[data-slot="session-turn-assistant-footer-meta"] {
+  user-select: none;
+  font-size: 12px;
+  color: var(--text-weak);
+  cursor: default;
+}
+
+/* 当前 user turn 的 footer 常显 */
+[data-slot="session-turn-assistant-footer"][data-pinned] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* 鼠标移入 assistant 内容区时显示 footer */
+[data-slot="session-turn-assistant-final-content"]:hover [data-slot="session-turn-assistant-footer"],
+[data-slot="session-turn-assistant-final-content"]:focus-within [data-slot="session-turn-assistant-footer"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+[data-component="compaction-part"] {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+
+  [data-slot="compaction-part-divider"] {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    width: 100%;
+  }
+
+  [data-slot="compaction-part-line"] {
+    flex: 1 1 auto;
+    height: 1px;
+    background: var(--border-weak-base);
+  }
+
+  [data-slot="compaction-part-label"] {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    text-align: center;
+  }
+}
+
+[data-component="reasoning-part"] {
+  width: 100%;
+  color: var(--text-base);
+  line-height: var(--line-height-normal);
+
+  /* 对照模式：原文/译文分段标签；原文略弱化以区分 */
+  [data-slot="reasoning-section-label"] {
+    display: block;
+    margin-top: 14px;
+    font-size: 11px;
+    font-weight: var(--font-weight-medium);
+    color: var(--text-weaker);
+  }
+
+  [data-slot="reasoning-section-label"] + [data-component="markdown"] {
+    margin-top: 4px;
+  }
+
+  &[data-contrast] [data-slot="reasoning-original"] [data-component="markdown"] {
+    opacity: 0.8;
+  }
+
+  [data-component="markdown"] {
+    margin-top: 16px;
+    font-style: normal;
+    font-size: 13px;
+    color: var(--text-weak);
+
+    strong,
+    b {
+      color: var(--text-weak);
+    }
+
+    p:has(strong) {
+      margin-top: 24px;
+      margin-bottom: 0;
+
+      &:first-child {
+        margin-top: 0;
+      }
+    }
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-component="reasoning-part"] [data-component="markdown"] :not(pre)>code {
+    opacity: 0.6;
+  }
+}
+
+[data-component="tool-output"] {
+  white-space: pre;
+  padding: 0;
+  margin-bottom: 24px;
+  height: fit-content;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+
+  [data-component="markdown"] {
+    width: 100%;
+    min-width: 0;
+
+    pre {
+      margin: 0;
+      padding: 0;
+      background-color: transparent !important;
+      border: none !important;
+    }
+  }
+
+  pre {
+    margin: 0;
+    padding: 0;
+    background: none;
+  }
+
+  &[data-scrollable] {
+    height: auto;
+    max-height: 240px;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    [data-component="markdown"] {
+      overflow: visible;
+    }
+  }
+}
+
+[data-component="bash-output"] {
+  width: 100%;
+  border: 1px solid var(--border-weak-base);
+  border-radius: 6px;
+  background: transparent;
+  position: relative;
+  overflow: hidden;
+
+  [data-slot="bash-copy"] {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+  }
+
+  &:hover [data-slot="bash-copy"],
+  &:focus-within [data-slot="bash-copy"] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  [data-slot="bash-copy"] [data-component="icon-button"][data-variant="secondary"] {
+    box-shadow: none;
+    border: 1px solid var(--border-weak-base);
+  }
+
+  [data-slot="bash-copy"] [data-component="icon-button"][data-variant="secondary"] [data-slot="icon-svg"] {
+    color: var(--icon-base);
+  }
+
+  [data-slot="bash-scroll"] {
+    width: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: 240px;
+
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  [data-slot="bash-pre"] {
+    margin: 0;
+    padding: 12px;
+  }
+
+  [data-slot="bash-pre"] code {
+    font-family: var(--font-family-mono);
+    font-feature-settings: var(--font-family-mono--font-feature-settings);
+    font-size: 13px;
+    line-height: var(--line-height-large);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+}
+
+[data-component="edit-trigger"],
+[data-component="write-trigger"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+
+  [data-slot="message-part-title-area"] {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  [data-slot="message-part-title"] {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    font-family: var(--font-family-sans);
+    font-size: 14px;
+    font-style: normal;
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-large);
+    letter-spacing: var(--letter-spacing-normal);
+    color: var(--text-base);
+  }
+
+  [data-slot="message-part-title-spinner"] {
+    margin-left: 4px;
+    width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--text-weak);
+
+    [data-component="spinner"] {
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  [data-slot="message-part-title-text"] {
+    flex-shrink: 0;
+    text-transform: capitalize;
+    color: var(--text-strong);
+    transition: color 0.15s ease;
+  }
+
+  [data-slot="message-part-title-filename"] {
+    /* No text-transform - preserve original filename casing */
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: var(--font-weight-regular);
+    transition: color 0.15s ease;
+  }
+
+  [data-slot="message-part-path"] {
+    display: flex;
+    flex-grow: 1;
+    min-width: 0;
+    font-weight: var(--font-weight-regular);
+  }
+
+  [data-slot="message-part-directory"] {
+    color: var(--text-weak);
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    direction: rtl;
+    text-align: left;
+    transition: color 0.15s ease;
+  }
+
+  [data-slot="message-part-filename"] {
+    color: var(--text-strong);
+    flex-shrink: 0;
+  }
+
+  [data-slot="message-part-actions"] {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    justify-content: flex-end;
+    flex-shrink: 0;
+  }
+}
+
+[data-component="edit-content"] {
+  border-radius: inherit;
+  border-top: 1px solid var(--border-weaker-base);
+  overflow-x: hidden;
+  overflow-y: visible;
+
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  [data-component="diff"] {
+    border-radius: inherit;
+    overflow: hidden;
+  }
+}
+
+[data-component="write-content"] {
+  border-radius: inherit;
+  border-top: 1px solid var(--border-weaker-base);
+  overflow-x: hidden;
+  overflow-y: visible;
+
+  [data-component="code"] {
+    padding-bottom: 0 !important;
+    border-radius: inherit;
+    overflow: hidden;
+  }
+
+  /* Hide scrollbar */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+[data-component="tool-action"] {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-component="exa-tool-output"] {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-large);
+  color: var(--text-base);
+}
+
+[data-slot="basic-tool-tool-subtitle"].exa-tool-query {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-slot="exa-tool-links"] {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+[data-slot="exa-tool-link"] {
+  display: block;
+  max-width: 100%;
+  font: inherit;
+  line-height: inherit;
+  color: var(--text-interactive-base);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &:hover {
+    color: var(--text-interactive-base);
+  }
+
+  &:visited {
+    color: var(--text-interactive-base);
+  }
+}
+
+[data-component="todos"] {
+  padding: 10px 0 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  [data-component="checkbox"] {
+    --checkbox-align: flex-start;
+    --checkbox-offset: 0.5px;
+  }
+
+  [data-slot="message-part-todo-content"] {
+    line-height: var(--line-height-normal);
+
+    &[data-completed="completed"] {
+      text-decoration: line-through;
+      color: var(--text-weaker);
+    }
+  }
+}
+
+[data-component="context-tool-group-trigger"] {
+  width: 100%;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0px;
+  cursor: default;
+
+  [data-slot="context-tool-group-title"] {
+    flex-shrink: 1;
+    min-width: 0;
+    transition: color 0.15s ease;
+  }
+
+  [data-slot="collapsible-arrow"] {
+    color: var(--icon-weaker);
+    cursor: pointer;
+    transition: color 0.15s ease;
+  }
+}
+
+[data-component="context-tool-group-trigger"]:hover [data-slot="context-tool-group-title"] {
+  color: var(--text-strong);
+}
+
+[data-component="context-tool-group-trigger"] [data-slot="context-tool-group-label-text"] {
+  transition: color 0.15s ease;
+}
+
+[data-component="context-tool-group-trigger"]:hover [data-slot="context-tool-group-title"] * {
+  color: inherit;
+}
+
+[data-component="context-tool-group-trigger"]:hover [data-slot="context-tool-group-title"].text-text-weak,
+[data-component="context-tool-group-trigger"]:hover [data-slot="context-tool-group-title"] .text-text-weak {
+  color: var(--text-strong);
+}
+
+[data-component="context-tool-group-trigger"]:hover [data-slot="context-tool-group-label"],
+[data-component="context-tool-group-trigger"]:hover [data-slot="context-tool-group-summary"],
+[data-component="context-tool-group-trigger"]:hover [data-slot="context-tool-group-title"] [data-component="icon"],
+[data-component="context-tool-group-trigger"]:hover [data-component="tool-status-title"],
+[data-component="context-tool-group-trigger"]:hover [data-component="tool-status-title"] [data-slot="tool-status-active"],
+[data-component="context-tool-group-trigger"]:hover [data-component="tool-status-title"] [data-slot="tool-status-done"],
+[data-component="context-tool-group-trigger"]:hover [data-component="tool-count-summary"],
+[data-component="context-tool-group-trigger"]:hover [data-component="tool-count-summary"] [data-slot="tool-count-summary-empty"],
+[data-component="context-tool-group-trigger"]:hover [data-component="tool-count-summary"] [data-slot="tool-count-summary-item"],
+[data-component="context-tool-group-trigger"]:hover [data-component="tool-count-summary"] [data-slot="tool-count-summary-prefix"],
+[data-component="context-tool-group-trigger"]:hover [data-component="tool-count-label"],
+[data-component="context-tool-group-trigger"]:hover [data-component="tool-count-label"] [data-slot="tool-count-label-before"],
+[data-component="context-tool-group-trigger"]:hover [data-component="tool-count-label"] [data-slot="tool-count-label-word"],
+[data-component="context-tool-group-trigger"]:hover [data-component="tool-count-label"] [data-slot="tool-count-label-stem"],
+[data-component="context-tool-group-trigger"]:hover [data-component="tool-count-label"] [data-slot="tool-count-label-suffix"],
+[data-component="context-tool-group-trigger"]:hover [data-component="tool-count-label"] [data-slot="tool-count-label-suffix-inner"] {
+  color: var(--text-strong);
+}
+
+[data-component="context-tool-group-trigger"]:hover [data-component="tool-status-title"] [data-component="text-shimmer"] {
+  --text-shimmer-base-color: var(--text-strong);
+  --text-shimmer-peak-color: var(--text-strong);
+  color: var(--text-strong);
+}
+
+[data-component="context-tool-group-trigger"]:hover [data-component="tool-status-title"] [data-slot="text-shimmer-char-base"],
+[data-component="context-tool-group-trigger"]:hover [data-component="tool-status-title"] [data-slot="text-shimmer-char-shimmer"] {
+  color: var(--text-strong) !important;
+  -webkit-text-fill-color: var(--text-strong) !important;
+  background-image: none !important;
+  opacity: 1 !important;
+}
+
+[data-component="context-tool-group-trigger"]:hover [data-slot="collapsible-arrow"] {
+  color: var(--icon-strong-base);
+}
+
+[data-component="context-tool-group-list"] {
+  padding-top: 0;
+  padding-right: 0;
+  padding-bottom: 0;
+  padding-left: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  [data-slot="context-tool-group-item"] {
+    min-width: 0;
+    padding: 0;
+  }
+}
+
+[data-component="activity-tool-group-trigger"] {
+  width: 100%;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0;
+  cursor: default;
+
+  [data-slot="activity-tool-group-title"] {
+    flex-shrink: 1;
+    min-width: 0;
+    transition: color 0.15s ease;
+  }
+
+  [data-slot="activity-tool-group-summary"] {
+    color: var(--text-weak);
+    transition: color 0.15s ease;
+  }
+
+  [data-slot="collapsible-arrow"] {
+    color: var(--icon-weaker);
+    cursor: pointer;
+    transition: color 0.15s ease;
+  }
+}
+
+[data-component="activity-tool-group-trigger"]:hover [data-slot="activity-tool-group-title"],
+[data-component="activity-tool-group-trigger"]:hover [data-slot="activity-tool-group-summary"] {
+  color: var(--text-strong);
+}
+
+[data-component="activity-tool-group-trigger"]:hover [data-slot="activity-tool-group-label"],
+[data-component="activity-tool-group-trigger"]:hover [data-component="tool-count-label"],
+[data-component="activity-tool-group-trigger"]:hover [data-component="tool-count-label"] [data-slot="tool-count-label-before"],
+[data-component="activity-tool-group-trigger"]:hover [data-component="tool-count-label"] [data-slot="tool-count-label-word"],
+[data-component="activity-tool-group-trigger"]:hover [data-component="tool-count-label"] [data-slot="tool-count-label-stem"],
+[data-component="activity-tool-group-trigger"]:hover [data-component="tool-count-label"] [data-slot="tool-count-label-suffix"],
+[data-component="activity-tool-group-trigger"]:hover [data-component="tool-count-label"] [data-slot="tool-count-label-suffix-inner"],
+[data-component="activity-tool-group-trigger"]:hover [data-slot="activity-tool-group-title"] [data-component="icon"] {
+  color: var(--text-strong);
+}
+
+[data-component="activity-tool-group-trigger"]:hover [data-slot="collapsible-arrow"] {
+  color: var(--icon-strong-base);
+}
+
+[data-component="activity-tool-group-list"] {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 0;
+  padding-right: 0;
+  padding-bottom: 0;
+}
+
+[data-component="activity-tool-group-list"][data-kind="command"] {
+  padding-left: 0;
+}
+
+[data-slot="activity-tool-group-item"][data-kind="command"] {
+  width: 100%;
+}
+
+[data-slot="activity-tool-item-row"] {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+  color: var(--text-weak);
+  transition: color 0.15s ease;
+}
+
+[data-slot="activity-tool-item-prefix"] {
+  flex: 0 0 auto;
+  font-family: var(--font-family-sans);
+  font-size: 14px;
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-large);
+  color: var(--text-weak);
+  transition: color 0.15s ease;
+}
+
+[data-slot="activity-tool-item-command"] {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-family-mono);
+  font-feature-settings: var(--font-family-mono--font-feature-settings);
+  font-size: 14px;
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-large);
+  color: var(--text-base);
+  transition: color 0.15s ease;
+}
+
+[data-slot="activity-tool-item-desc"] {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-family-sans);
+  font-size: 14px;
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-large);
+  color: var(--text-weaker);
+  transition: color 0.15s ease;
+}
+
+[data-slot="activity-tool-item-row"]:hover [data-slot="activity-tool-item-prefix"],
+[data-slot="activity-tool-item-row"]:hover [data-slot="activity-tool-item-command"],
+[data-slot="activity-tool-item-row"]:hover [data-slot="activity-tool-item-desc"] {
+  color: var(--text-strong);
+}
+
+[data-slot="activity-tool-item-row"]:hover [data-slot="collapsible-arrow"] {
+  color: var(--icon-strong-base);
+}
+
+[data-slot="activity-tool-item-spacer"] {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* TextShimmer 内部使用 will-change:transform + translateZ(0) 创建 GPU 合成层,
+   在上下文较多时合成层会溢出 row 边界与相邻元素重叠,这里强制约束截断 */
+[data-slot="activity-tool-item-row"] [data-component="text-shimmer"] {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+[data-slot="activity-tool-item-row"] [data-component="text-shimmer"] [data-slot="text-shimmer-char"] {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+[data-slot="activity-tool-item-row"] [data-component="text-shimmer"] [data-slot="text-shimmer-char-base"],
+[data-slot="activity-tool-item-row"] [data-component="text-shimmer"] [data-slot="text-shimmer-char-shimmer"] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+[data-component="bash-output"][data-variant="codex-activity"] {
+  margin-top: 6px;
+  border: 1px solid #b7b7b7;
+  border-radius: 12px;
+  background: var(--markdown-code-background);
+  box-shadow: inset 0 0 0 0.5px rgb(255 255 255 / 18%);
+  padding-bottom: 2px;
+}
+
+:root[data-color-scheme="light"] [data-component="bash-output"][data-variant="codex-activity"] {
+  border-color: #AEAEAE;
+  background: var(--markdown-code-background);
+  box-shadow: inset 0 0 0 0.5px rgb(255 255 255 / 18%);
+}
+
+:root[data-color-scheme="dark"] [data-component="bash-output"][data-variant="codex-activity"] {
+  border-color: #414141;
+  background: #1f1f1f;
+  box-shadow: inset 0 0 0 0.5px rgb(255 255 255 / 2.5%);
+}
+
+[data-component="edit-trigger"]:hover [data-slot="message-part-title-text"],
+[data-component="edit-trigger"]:hover [data-slot="message-part-title-filename"],
+[data-component="edit-trigger"]:hover [data-slot="message-part-directory"],
+[data-component="write-trigger"]:hover [data-slot="message-part-title-text"],
+[data-component="write-trigger"]:hover [data-slot="message-part-title-filename"],
+[data-component="write-trigger"]:hover [data-slot="message-part-directory"] {
+  color: var(--text-strong);
+}
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-header"] {
+  display: flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 10px 14px 0;
+}
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-header-title"] {
+  font-family: var(--font-family-sans);
+  font-size: 13px;
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-large);
+  color: light-dark(#777777, var(--text-weak));
+}
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-command"],
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-output-section"],
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-output-body"] {
+  position: relative;
+}
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-command-copy"],
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-output-copy"] {
+  top: 10px;
+  right: 10px;
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 2;
+}
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-command"] {
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+  overflow: hidden;
+}
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-output-section"]::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 30px;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    light-dark(
+      color-mix(in srgb, var(--markdown-code-background) 96%, transparent),
+      rgb(31 31 31 / 96%)
+    ) 0%,
+    light-dark(
+      color-mix(in srgb, var(--markdown-code-background) 72%, transparent),
+      rgb(31 31 31 / 72%)
+    ) 34%,
+    transparent 100%
+  );
+}
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-command"]:hover [data-slot="bash-command-copy"],
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-command"]:focus-within [data-slot="bash-command-copy"],
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-output-section"]:hover [data-slot="bash-output-copy"],
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-output-section"]:focus-within [data-slot="bash-output-copy"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-command"] [data-slot="bash-pre"] {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 8px 14px 8px;
+  white-space: normal;
+  overflow: hidden;
+}
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-command"] [data-slot="bash-pre"] code {
+  display: -webkit-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-output-body"] {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  min-height: 32px;
+  max-height: 120px;
+  overflow: scroll;
+  scrollbar-width: auto;
+  scrollbar-color: light-dark(#d1d1d1, #3b3b3b) transparent;
+  scrollbar-gutter: stable;
+}
+
+[data-component="bash-output"][data-variant="codex-activity"]:hover [data-slot="bash-output-body"] {
+  scrollbar-color: light-dark(#b9b9b9, #6f6f6f) transparent;
+}
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-output-body"]::-webkit-scrollbar {
+  display: block;
+  width: 12px;
+  height: 12px;
+}
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-output-body"]::-webkit-scrollbar-thumb {
+  min-width: 32px;
+  min-height: 32px;
+  background-color: light-dark(#d1d1d1, #3b3b3b);
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+
+[data-component="bash-output"][data-variant="codex-activity"]:hover [data-slot="bash-output-body"]::-webkit-scrollbar-thumb {
+  background-color: light-dark(#b9b9b9, #6f6f6f);
+}
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-output-body"]::-webkit-scrollbar-thumb:hover,
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-output-body"]::-webkit-scrollbar-thumb:active {
+  background-color: light-dark(#a8a8a8, #8a8a8a);
+}
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-output-body"]::-webkit-scrollbar-track,
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-output-body"]::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-command-copy"] [data-component="icon-button"][data-variant="secondary"],
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-output-copy"] [data-component="icon-button"][data-variant="secondary"] {
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+}
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-command-copy"] [data-component="icon-button"][data-variant="secondary"] [data-slot="icon-svg"],
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-output-copy"] [data-component="icon-button"][data-variant="secondary"] [data-slot="icon-svg"] {
+  color: light-dark(#9AA0A6, var(--icon-weak-base));
+}
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-command-copy"] [data-component="icon-button"][data-variant="secondary"]:hover:not(:disabled),
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-output-copy"] [data-component="icon-button"][data-variant="secondary"]:hover:not(:disabled),
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-command-copy"] [data-component="icon-button"][data-variant="secondary"]:focus-visible:not(:disabled),
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-output-copy"] [data-component="icon-button"][data-variant="secondary"]:focus-visible:not(:disabled) {
+  background: light-dark(#DCDDDE, color-mix(in srgb, var(--background-base) 90%, transparent));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border-weaker-base) 60%, transparent);
+}
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-scroll"] {
+  width: max-content;
+  min-width: 100%;
+  overflow: visible;
+  max-height: none;
+}
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-pre"] {
+  display: inline-block;
+  min-width: max-content;
+  width: max-content;
+  padding: 8px 14px 4px;
+  white-space: pre;
+}
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-pre"][data-section="output"] {
+  display: inline-block;
+  min-width: max-content;
+  width: max-content;
+  padding-top: 8px;
+}
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-pre"] code {
+  display: block;
+  min-width: max-content;
+  font-family: var(--font-family-mono);
+  font-feature-settings: var(--font-family-mono--font-feature-settings);
+  font-size: 13px;
+  font-weight: var(--font-weight-regular);
+  line-height: 1.75;
+  color: light-dark(#50555c, var(--text-strong));
+  white-space: pre;
+  overflow-wrap: normal;
+}
+
+/* wanlai-theme: Shell 字色对齐 ChatGPT Codex */
+:root[data-theme="wanlai-theme"] [data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-pre"] code,
+:root[data-theme="wanlai-theme"] [data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-pre"] code span {
+  color: light-dark(#44474c, #d1d1d1) !important;
+  font-size: 13px;
+  font-weight: var(--font-weight-regular);
+  line-height: 1.67;
+}
+
+:root[data-theme="wanlai-theme"] [data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-pre"] code .ansi-prompt {
+  color: light-dark(#44474c, #a9a9a9) !important;
+  font-weight: var(--font-weight-regular);
+}
+
+/* ANSI terminal colors for bash output */
+[data-slot="bash-pre"] code .ansi-prompt {
+	color: light-dark(#2da44e, #57ab5a) !important;
+	font-weight: var(--font-weight-bold);
+}
+[data-slot="bash-pre"] code .ansi-bold {
+	font-weight: var(--font-weight-bold);
+}
+[data-slot="bash-pre"] code .ansi-dim {
+	opacity: 0.6;
+}
+[data-slot="bash-pre"] code .ansi-italic {
+	font-style: italic;
+}
+[data-slot="bash-pre"] code .ansi-underline {
+	text-decoration: underline;
+}
+
+/* Tango palette (GNOME Terminal standard) — light mode */
+/* Standard colors */
+[data-slot="bash-pre"] code .ansi-fg-0 { color: light-dark(#2e3436, #d3d7cf); }
+[data-slot="bash-pre"] code .ansi-fg-1 { color: light-dark(#cc0000, #ef2929); }
+[data-slot="bash-pre"] code .ansi-fg-2 { color: light-dark(#4e9a06, #8ae234); }
+[data-slot="bash-pre"] code .ansi-fg-3 { color: light-dark(#c4a000, #fce94f); }
+[data-slot="bash-pre"] code .ansi-fg-4 { color: light-dark(#3465a4, #729fcf); }
+[data-slot="bash-pre"] code .ansi-fg-5 { color: light-dark(#75507b, #ad7fa8); }
+[data-slot="bash-pre"] code .ansi-fg-6 { color: light-dark(#06989a, #34e2e2); }
+[data-slot="bash-pre"] code .ansi-fg-7 { color: light-dark(#d3d7cf, #eeeeec); }
+/* Bright colors */
+[data-slot="bash-pre"] code .ansi-fg-br-0 { color: light-dark(#555753, #888a85); }
+[data-slot="bash-pre"] code .ansi-fg-br-1 { color: light-dark(#ef2929, #f76c6c); }
+[data-slot="bash-pre"] code .ansi-fg-br-2 { color: light-dark(#8ae234, #a1e85e); }
+[data-slot="bash-pre"] code .ansi-fg-br-3 { color: light-dark(#fce94f, #fde970); }
+[data-slot="bash-pre"] code .ansi-fg-br-4 { color: light-dark(#729fcf, #95bce9); }
+[data-slot="bash-pre"] code .ansi-fg-br-5 { color: light-dark(#ad7fa8, #c69dc0); }
+[data-slot="bash-pre"] code .ansi-fg-br-6 { color: light-dark(#34e2e2, #5ce8e8); }
+[data-slot="bash-pre"] code .ansi-fg-br-7 { color: light-dark(#eeeeec, #ffffff); }
+/* Background colors */
+[data-slot="bash-pre"] code .ansi-bg-0 { background-color: light-dark(#2e3436, #2e3436); }
+[data-slot="bash-pre"] code .ansi-bg-1 { background-color: light-dark(#cc0000, #cc0000); }
+[data-slot="bash-pre"] code .ansi-bg-2 { background-color: light-dark(#4e9a06, #4e9a06); }
+[data-slot="bash-pre"] code .ansi-bg-3 { background-color: light-dark(#c4a000, #c4a000); }
+[data-slot="bash-pre"] code .ansi-bg-4 { background-color: light-dark(#3465a4, #3465a4); }
+[data-slot="bash-pre"] code .ansi-bg-5 { background-color: light-dark(#75507b, #75507b); }
+[data-slot="bash-pre"] code .ansi-bg-6 { background-color: light-dark(#06989a, #06989a); }
+[data-slot="bash-pre"] code .ansi-bg-7 { background-color: light-dark(#d3d7cf, #d3d7cf); }
+[data-slot="bash-pre"] code .ansi-bg-br-0 { background-color: light-dark(#555753, #555753); }
+[data-slot="bash-pre"] code .ansi-bg-br-1 { background-color: light-dark(#ef2929, #ef2929); }
+[data-slot="bash-pre"] code .ansi-bg-br-2 { background-color: light-dark(#8ae234, #8ae234); }
+[data-slot="bash-pre"] code .ansi-bg-br-3 { background-color: light-dark(#fce94f, #fce94f); }
+[data-slot="bash-pre"] code .ansi-bg-br-4 { background-color: light-dark(#729fcf, #729fcf); }
+[data-slot="bash-pre"] code .ansi-bg-br-5 { background-color: light-dark(#ad7fa8, #ad7fa8); }
+[data-slot="bash-pre"] code .ansi-bg-br-6 { background-color: light-dark(#34e2e2, #34e2e2); }
+[data-slot="bash-pre"] code .ansi-bg-br-7 { background-color: light-dark(#eeeeec, #eeeeec); }
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-empty"] {
+  padding: 10px 14px 2px;
+  font-family: var(--font-family-sans);
+  font-size: 13px;
+  line-height: var(--line-height-large);
+  color: light-dark(#8a8f98, var(--text-weaker));
+}
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-status"] {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -2px;
+  padding: 0 14px 0;
+  align-items: flex-end;
+  min-height: 16px;
+}
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-status-text"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-family-sans);
+  font-size: 13px;
+  font-weight: var(--font-weight-regular);
+  line-height: 16px;
+}
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-status-text"] [data-component="icon"] {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  color: currentColor;
+}
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-status-text"][data-status="success"] {
+  color: light-dark(#8a8f98, var(--text-weak));
+}
+
+[data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-status-text"][data-status="error"] {
+  color: var(--text-danger-base, var(--text-weak));
+}
+
+[data-component="diagnostics"] {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px;
+  background-color: var(--surface-critical-weak);
+  border-top: 1px solid var(--border-critical-base);
+
+  [data-slot="diagnostic"] {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-large);
+  }
+
+  [data-slot="diagnostic-label"] {
+    color: var(--text-on-critical-base);
+    font-weight: var(--font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: -0.5px;
+    flex-shrink: 0;
+  }
+
+  [data-slot="diagnostic-location"] {
+    color: var(--text-on-critical-weak);
+    flex-shrink: 0;
+  }
+
+  [data-slot="diagnostic-message"] {
+    color: var(--text-on-critical-base);
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+  }
+}
+
+[data-component="user-message"] [data-slot="user-message-text"],
+[data-component="text-part"],
+[data-component="reasoning-part"],
+[data-component="tool-output"],
+[data-component="bash-output"],
+[data-component="edit-content"],
+[data-component="activity-edit-preview"],
+[data-component="write-content"],
+[data-component="todos"],
+[data-component="diagnostics"],
+.error-card {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+[data-component="activity-edit-preview"] {
+  pointer-events: auto;
+}
+
+[data-component="tool-part-wrapper"] {
+  width: 100%;
+}
+
+[data-component="dock-prompt"][data-kind="permission"] {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
+  max-height: 100dvh;
+
+  [data-slot="permission-body"] {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    flex: 1;
+    min-height: 0;
+    padding: 12px 12px 0;
+  }
+
+  [data-slot="permission-header"] {
+    padding: 0;
+  }
+
+  [data-slot="permission-row"] {
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    column-gap: 8px;
+    align-items: start;
+  }
+
+  [data-slot="permission-row"][data-variant="header"] {
+    align-items: center;
+  }
+
+  [data-slot="permission-icon"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  [data-slot="permission-icon"] [data-component="icon"] {
+    color: var(--icon-warning-base);
+  }
+
+  [data-slot="permission-header-title"] {
+    font-family: var(--font-family-sans);
+    font-size: 14px;
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-large);
+    color: var(--text-strong);
+    min-width: 0;
+  }
+
+  [data-slot="permission-content"] {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  [data-slot="permission-hint"] {
+    font-family: var(--font-family-sans);
+    font-size: 14px;
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-large);
+    color: var(--text-weak);
+    padding: 0;
+  }
+
+  [data-slot="permission-patterns"] {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+    margin-bottom: 16px;
+    padding: 1px 0 8px;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    code {
+      font-size: 14px;
+      line-height: var(--line-height-large);
+    }
+  }
+
+  [data-slot="permission-footer"] {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    padding: 32px 8px 8px;
+    margin-top: -24px;
+  }
+
+  [data-slot="permission-footer-actions"] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    [data-component="button"] {
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+  }
+}
+
+:root[data-color-scheme="dark"] [data-component="dock-prompt"][data-kind="permission"] [data-component="button"][data-variant="primary"] {
+  color: var(--icon-brand-base);
+}
+
+:root[data-color-scheme="dark"] [data-component="dock-prompt"][data-kind="permission"] [data-component="button"][data-variant="primary"]:hover:not(:disabled),
+:root[data-color-scheme="dark"] [data-component="dock-prompt"][data-kind="permission"] [data-component="button"][data-variant="primary"]:focus:not(:disabled),
+:root[data-color-scheme="dark"] [data-component="dock-prompt"][data-kind="permission"] [data-component="button"][data-variant="primary"]:active:not(:disabled) {
+  background-color: var(--button-primary-base);
+  color: var(--icon-brand-base);
+}
+
+[data-component="dock-prompt"][data-kind="question"] {
+  position: relative;
+  outline: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
+  max-height: min(var(--question-prompt-max-height, 100dvh), 560px);
+
+  [data-slot="question-body"] {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    flex: 1;
+    min-height: 0;
+    padding: 8px 8px 0;
+  }
+
+  [data-slot="question-header"] {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 10px;
+  }
+
+  [data-slot="question-header-title"] {
+    font-family: var(--font-family-sans);
+    font-size: 16px;
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-large);
+    color: var(--text-strong);
+    min-width: 0;
+  }
+
+  [data-slot="question-header-right"] {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  [data-slot="question-pager"] {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    font-family: var(--font-family-sans);
+    font-size: 12px;
+    line-height: var(--line-height-large);
+    color: var(--text-base);
+    font-variant-numeric: tabular-nums;
+  }
+
+  [data-slot="question-pager-label"] {
+    padding: 0 2px;
+  }
+
+  [data-slot="question-pager-nav"] {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    border-radius: var(--radius-md);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--icon-strong-base);
+    transition: background-color 0.15s ease;
+
+    &:hover:not(:disabled) {
+      background-color: var(--surface-base-hover);
+    }
+
+    &:focus-visible {
+      box-shadow: inset 0 0 0 1px var(--border-interactive-base);
+    }
+
+    &:disabled {
+      cursor: default;
+      color: var(--icon-weak-base);
+    }
+  }
+
+  [data-slot="question-close"] {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    border-radius: var(--radius-md);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    color: var(--icon-strong-base);
+    transition: background-color 0.15s ease;
+
+    &:hover:not(:disabled) {
+      background-color: var(--surface-base-hover);
+    }
+
+    &:focus-visible {
+      box-shadow: inset 0 0 0 1px var(--border-interactive-base);
+    }
+
+    &:disabled {
+      cursor: default;
+      color: var(--icon-weak-base);
+    }
+  }
+
+  /* icon.css 的 color: var(--icon-base) 是直接声明，按钮上的 color 继承不过去，disabled 置灰会整个空转 */
+  [data-slot="question-pager-nav"] [data-component="icon"],
+  [data-slot="question-close"] [data-component="icon"] {
+    color: currentColor;
+  }
+
+  [data-slot="question-content"] {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  [data-slot="question-text-row"] {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 10px 4px;
+  }
+
+  [data-slot="question-text"] {
+    font-family: var(--font-family-sans);
+    font-size: 14px;
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-large);
+    color: var(--text-strong);
+  }
+
+  [data-slot="question-hint"] {
+    font-family: var(--font-family-sans);
+    font-size: 12px;
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-large);
+    color: var(--text-weak);
+    flex-shrink: 0;
+  }
+
+  [data-slot="question-options"] {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 0;
+    padding: 0 8px 4px;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong-base) transparent;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: var(--border-strong-base);
+      border-radius: 999px;
+    }
+  }
+
+  [data-slot="question-option"] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    min-height: 32px;
+    background-color: transparent;
+    border: 0;
+    border-radius: 999px;
+    box-shadow: none;
+    outline: none;
+    text-align: left;
+    width: 100%;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+
+    /* 半透明叠层而不是不透明底色：--background-base 在亮色主题与面板底色同值，三态会一起消失 */
+    &:hover:not(:disabled) {
+      background-color: var(--surface-base-hover);
+    }
+
+    &[data-picked="true"] {
+      background-color: var(--surface-base-hover);
+    }
+
+    &:focus-visible {
+      background-color: var(--surface-base-hover);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+  }
+
+  [data-slot="question-marker"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    border: 1px solid var(--border-weak-base);
+    background-color: var(--surface-base-hover);
+    color: var(--text-base);
+    font-family: var(--font-family-sans);
+    font-size: 12px;
+    font-weight: var(--font-weight-medium);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      color 0.15s ease;
+
+    &[data-picked="true"] {
+      border-color: var(--text-strong);
+      background-color: var(--text-strong);
+      color: var(--text-invert-base);
+    }
+  }
+
+  [data-slot="question-marker-dot"] {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background-color: currentColor;
+  }
+
+  /* 勾号/铅笔要跟着徽章的选中态换色：Icon 自带 --icon-base，实心底上会失去对比 */
+  [data-slot="question-marker"] [data-component="icon"] {
+    width: 16px;
+    height: 16px;
+    color: currentColor;
+  }
+
+  [data-slot="question-option-main"] {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  [data-slot="question-option-head"] {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    max-width: 50%;
+    flex-shrink: 0;
+
+    /* 没有描述时标题独占整行，半宽只为给同行的描述让位 */
+    &:only-child {
+      max-width: none;
+      flex: 1;
+    }
+  }
+
+  [data-slot="option-label"] {
+    font-family: var(--font-family-sans);
+    font-size: 14px;
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-large);
+    color: var(--text-strong);
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  [data-slot="option-description"] {
+    font-family: var(--font-family-sans);
+    font-size: 13px;
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-large);
+    color: var(--text-base);
+    min-width: 0;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* 与「已选」chip 同一套底色：只靠一根发丝框的话明暗两色下都读不出是个 chip */
+  [data-slot="question-option-recommend"] {
+    flex-shrink: 0;
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
+    background-color: var(--surface-interactive-weak);
+    font-family: var(--font-family-sans);
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--text-base);
+  }
+
+  [data-slot="question-option-badge"] {
+    flex-shrink: 0;
+    align-self: center;
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
+    background-color: var(--surface-interactive-weak);
+    font-family: var(--font-family-sans);
+    font-size: 10px;
+    line-height: 1.6;
+    color: var(--text-base);
+  }
+
+  [data-slot="question-custom"] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+    padding: 0 2px;
+  }
+
+  /* 与选项行焦点同一套叠层：--surface-interactive-weak 暗色是饱和藏青，会是全面板唯一剩下的蓝色状态色 */
+  [data-slot="question-custom"]:focus-within {
+    background-color: var(--surface-base-hover);
+    border-radius: 12px;
+  }
+
+  [data-slot="question-custom-input"] {
+    width: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+    font-family: var(--font-family-sans);
+    font-size: 14px;
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-large);
+    color: var(--text-strong);
+    min-width: 0;
+    cursor: text;
+    resize: none;
+    /* 上限 128px 后内部滚动：粘贴长文本不再把选项列表挤没 */
+    max-height: 128px;
+    overflow-y: auto;
+    overflow-wrap: anywhere;
+
+    &::placeholder {
+      color: var(--text-weak);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+    }
+  }
+
+  [data-slot="question-footer"] {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-shrink: 0;
+    padding: 6px 8px 6px 10px;
+  }
+
+  [data-slot="question-footer-actions"] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    /* custom: false 的题只剩这一个 flex 子元素，space-between 会把它甩到左边 */
+    margin-left: auto;
+  }
+
+  [data-slot="question-key"] {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 6px;
+    padding: 1px 5px;
+    border-radius: var(--radius-sm);
+    background-color: var(--surface-interactive-weak);
+    font-family: var(--font-family-mono);
+    font-size: 10px;
+    line-height: 1.6;
+    color: var(--text-base);
+  }
+
+  [data-component="button"][data-variant="primary"] [data-slot="question-key"] {
+    background-color: rgb(255 255 255 / 0.18);
+    color: var(--text-invert-base);
+  }
+}
+
+@supports (corner-shape: superellipse(1.5)) {
+  [data-component="dock-prompt"][data-kind="question"] [data-dock-surface="shell"] {
+    border-radius: 15px;
+  }
+}
+
+:root[data-color-scheme="dark"] [data-component="dock-prompt"][data-kind="question"] {
+  [data-dock-surface="shell"] {
+    background-color: #161616;
+    border-color: #2a2a2a;
+  }
+
+  [data-dock-surface="tray"] {
+    background-color: #050505;
+    border-color: #202020;
+  }
+
+  [data-slot="question-header-title"],
+  [data-slot="question-text"],
+  [data-slot="option-label"] {
+    color: rgba(255, 255, 255, 0.94);
+  }
+
+  [data-slot="question-hint"],
+  [data-slot="option-description"] {
+    color: rgba(255, 255, 255, 0.62);
+  }
+
+  /* 亮色的选中底 --text-strong 在暗色是近白，一排选中项会变成一串刺眼白点；改用中性亮底，
+     比 primary 按钮再亮半档（叠在行底上约 #4f4f4f，按钮叠在 tray 上约 #323232），选中在行内仍认得出 */
+  [data-slot="question-marker"][data-picked="true"] {
+    border-color: rgba(255, 255, 255, 0.3);
+    background-color: rgba(255, 255, 255, 0.22);
+    color: rgba(255, 255, 255, 0.95);
+  }
+
+  /* --surface-interactive-weak 暗色是饱和藏青，chip 底一律压成中性 */
+  [data-slot="question-key"],
+  [data-slot="question-option-badge"],
+  [data-slot="question-option-recommend"] {
+    background-color: #232323;
+  }
+
+  [data-slot="question-footer"] [data-component="button"] {
+    min-width: 56px;
+    box-shadow: none;
+  }
+
+  [data-slot="question-footer"] [data-component="button"][data-variant="secondary"] {
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background-color: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.9);
+
+    &:hover:not(:disabled),
+    &:focus-visible:not(:disabled) {
+      background-color: rgba(255, 255, 255, 0.14);
+    }
+  }
+
+  [data-slot="question-footer"] [data-component="button"][data-variant="primary"] {
+    border-color: rgba(255, 255, 255, 0.24);
+    background-color: rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.95);
+
+    &:hover:not(:disabled),
+    &:focus-visible:not(:disabled) {
+      background-color: rgba(255, 255, 255, 0.26);
+    }
+
+    [data-slot="question-key"] {
+      background-color: rgba(255, 255, 255, 0.16);
+      color: rgba(255, 255, 255, 0.75);
+    }
+  }
+
+  [data-slot="question-footer"] [data-component="button"]:disabled {
+    opacity: 1;
+    border-color: rgba(255, 255, 255, 0.18);
+    background-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.58);
+  }
+}
+
+[data-component="question-answers"] {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 0;
+
+  [data-slot="question-answer-item"] {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 13px;
+
+    [data-slot="question-text"] {
+      color: var(--text-weak);
+    }
+
+    [data-slot="answer-text"] {
+      color: var(--text-strong);
+    }
+  }
+}
+
+[data-component="edit-tool"],
+[data-component="write-tool"],
+[data-component="apply-patch-tool"] {
+  >[data-component="collapsible"].tool-collapsible {
+    gap: 0px;
+  }
+
+  >[data-component="collapsible"]>[data-slot="collapsible-content"] {
+    border: none;
+    background: transparent;
+  }
+
+  >[data-component="collapsible"]>[data-slot="collapsible-trigger"][aria-expanded="true"] {
+    position: sticky;
+    top: var(--sticky-accordion-top, 0px);
+    z-index: 20;
+    height: calc(32px + var(--tool-content-gap));
+    padding-bottom: var(--tool-content-gap);
+    background-color: var(--background-stronger);
+  }
+}
+
+[data-component="accordion"][data-scope="apply-patch"] {
+  [data-slot="accordion-trigger"] {
+    background-color: var(--background-stronger) !important;
+  }
+
+  [data-slot="apply-patch-trigger-content"] {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 20px;
+  }
+
+  [data-slot="apply-patch-file-info"] {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    min-width: 0;
+  }
+
+  [data-slot="apply-patch-file-name-container"] {
+    display: flex;
+    flex-grow: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  [data-slot="apply-patch-directory"] {
+    color: var(--text-base);
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    direction: rtl;
+    text-align: left;
+  }
+
+  [data-slot="apply-patch-filename"] {
+    color: var(--text-strong);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  [data-slot="apply-patch-trigger-actions"] {
+    flex-shrink: 0;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  [data-slot="apply-patch-change"] {
+    font-family: var(--font-family-sans);
+    font-size: var(--font-size-small);
+    font-weight: var(--font-weight-medium);
+  }
+
+  [data-slot="apply-patch-change"][data-type="added"] {
+    color: var(--icon-diff-add-base);
+  }
+
+  [data-slot="apply-patch-change"][data-type="removed"] {
+    color: var(--icon-diff-delete-base);
+  }
+
+  [data-slot="apply-patch-change"][data-type="modified"] {
+    color: var(--icon-diff-modified-base);
+  }
+}
+
+[data-component="apply-patch-file-diff"] {
+  border-radius: inherit;
+  overflow-x: hidden;
+  overflow-y: visible;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  [data-component="diff"] {
+    border-radius: inherit;
+    overflow: hidden;
+  }
+}
+
+[data-component="tool-loaded-file"] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0 4px 28px;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-large);
+  color: var(--text-weak);
+
+  [data-component="icon"] {
+    flex-shrink: 0;
+    color: var(--icon-weak);
+  }
+}

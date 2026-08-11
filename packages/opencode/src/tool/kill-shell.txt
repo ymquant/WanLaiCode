@@ -1,0 +1,7 @@
+Stops a background shell started by the bash tool (run_in_background) or auto-moved to the background after a timeout.
+
+- Pass the background id (e.g. bash_1).
+- Sends SIGTERM, escalating to SIGKILL after 3 seconds if needed.
+- Returns the tail of the command's output captured so far.
+
+Use this when a background command is stuck, no longer needed, or you have decided on a different strategy.

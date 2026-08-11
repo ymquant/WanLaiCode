@@ -1,0 +1,295 @@
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing vX.Y.Z tag on main
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-release-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  verify-tag:
+    runs-on: ubuntu-24.04
+    outputs:
+      sha: ${{ steps.verify.outputs.sha }}
+      version: ${{ steps.verify.outputs.version }}
+    steps:
+      - name: Checkout selected tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ inputs.tag }}
+
+      - name: Require a release tag reachable from main
+        id: verify
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::tag 必须符合 vX.Y.Z"; exit 1; }
+          git fetch --no-tags origin main
+          git rev-parse --verify "refs/tags/${TAG}^{commit}" >/dev/null
+          git merge-base --is-ancestor "refs/tags/${TAG}^{commit}" origin/main || {
+            echo "::error::tag 不在 main 历史中"
+            exit 1
+          }
+          echo "sha=$(git rev-parse "refs/tags/${TAG}^{commit}")" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+  build-and-sign:
+    needs: verify-tag
+    environment: release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: mac-intel
+            os: macos-15-intel
+            target: x86_64-apple-darwin
+            package_flag: --mac --x64
+            install_flags: --os=darwin --cpu=x64
+            artifacts: |
+              packages/desktop/dist/*.dmg
+              packages/desktop/dist/*.zip
+              packages/desktop/dist/*.blockmap
+              packages/desktop/dist/latest*.yml
+          - name: mac-arm64
+            os: macos-15
+            target: aarch64-apple-darwin
+            package_flag: --mac --arm64
+            install_flags: --os=darwin --cpu=arm64
+            artifacts: |
+              packages/desktop/dist/*.dmg
+              packages/desktop/dist/*.zip
+              packages/desktop/dist/*.blockmap
+              packages/desktop/dist/latest*.yml
+          - name: win-x64
+            os: windows-2025
+            target: x86_64-pc-windows-msvc
+            package_flag: --win --x64
+            install_flags: ""
+            artifacts: |
+              packages/desktop/dist/*.exe
+              packages/desktop/dist/*.blockmap
+              packages/desktop/dist/latest*.yml
+          - name: linux-x64
+            os: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+            package_flag: --linux --x64
+            install_flags: ""
+            artifacts: |
+              packages/desktop/dist/*.AppImage
+              packages/desktop/dist/*.deb
+              packages/desktop/dist/*.rpm
+              packages/desktop/dist/latest*.yml
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    steps:
+      - name: Checkout the verified commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ needs.verify-tag.outputs.sha }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.3.14
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+
+      - name: Install locked dependencies
+        shell: bash
+        run: bun install --frozen-lockfile ${{ matrix.install_flags }}
+
+      - name: Build without signing credentials
+        shell: bash
+        run: bun run build
+        working-directory: packages/desktop
+        env:
+          MODELS_DEV_API_JSON: ""
+          RUST_TARGET: ${{ matrix.target }}
+          WANLAICODE_CHANNEL: prod
+          WANLAICODE_DISPATCH_CHANNEL: prod
+          WANLAICODE_VERSION: ${{ needs.verify-tag.outputs.version }}
+
+      - name: Import macOS signing certificate into an ephemeral keychain
+        if: startsWith(matrix.name, 'mac-')
+        uses: apple-actions/import-codesign-certs@5142e029c445c10ffc7149d172e540235a065466 # v7.0.0
+        with:
+          keychain: wanlaicode-release-${{ matrix.name }}
+          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE }}
+          p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+
+      - name: Install pinned Windows signing client
+        if: matrix.name == 'win-x64'
+        shell: pwsh
+        env:
+          SIGNCLIENT_DOWNLOAD_URL: ${{ vars.SIGNCLIENT_DOWNLOAD_URL }}
+          SIGNCLIENT_SHA256: ${{ vars.SIGNCLIENT_SHA256 }}
+          SIGNCLIENT_EXPECTED_PUBLISHER: ${{ vars.SIGNCLIENT_EXPECTED_PUBLISHER }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          if (-not $env:SIGNCLIENT_DOWNLOAD_URL -or -not $env:SIGNCLIENT_SHA256) {
+            throw "SIGNCLIENT_DOWNLOAD_URL and SIGNCLIENT_SHA256 are required"
+          }
+          $target = Join-Path $env:RUNNER_TEMP "SignClient.exe"
+          Invoke-WebRequest -Uri $env:SIGNCLIENT_DOWNLOAD_URL -OutFile $target
+          $actual = (Get-FileHash -Algorithm SHA256 $target).Hash.ToLowerInvariant()
+          if ($actual -ne $env:SIGNCLIENT_SHA256.ToLowerInvariant()) {
+            throw "SignClient SHA-256 mismatch"
+          }
+          if ($env:SIGNCLIENT_EXPECTED_PUBLISHER) {
+            $signature = Get-AuthenticodeSignature $target
+            if ($signature.Status -ne "Valid" -or $signature.SignerCertificate.Subject -notlike "*$env:SIGNCLIENT_EXPECTED_PUBLISHER*") {
+              throw "SignClient publisher verification failed"
+            }
+          }
+          "SIGNCLIENT_PATH=$target" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Package and sign macOS
+        if: startsWith(matrix.name, 'mac-')
+        shell: bash
+        run: npx electron-builder ${{ matrix.package_flag }} --publish never --config electron-builder.config.ts
+        working-directory: packages/desktop
+        env:
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          CSC_IDENTITY_AUTO_DISCOVERY: "true"
+          CSC_KEY_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          CSC_LINK: ${{ secrets.APPLE_CERTIFICATE }}
+          MODELS_DEV_API_JSON: ""
+          RUST_TARGET: ${{ matrix.target }}
+          S3_BUCKET: ${{ vars.S3_BUCKET }}
+          S3_ENDPOINT: ${{ vars.S3_ENDPOINT }}
+          S3_REGION: ${{ vars.S3_REGION }}
+          WANLAICODE_CHANNEL: prod
+          WANLAICODE_DISPATCH_CHANNEL: prod
+          WANLAICODE_VERSION: ${{ needs.verify-tag.outputs.version }}
+
+      - name: Package and sign Windows
+        if: matrix.name == 'win-x64'
+        shell: bash
+        run: npx electron-builder ${{ matrix.package_flag }} --publish never --config electron-builder.config.ts
+        working-directory: packages/desktop
+        env:
+          MODELS_DEV_API_JSON: ""
+          RUST_TARGET: ${{ matrix.target }}
+          S3_BUCKET: ${{ vars.S3_BUCKET }}
+          S3_ENDPOINT: ${{ vars.S3_ENDPOINT }}
+          S3_REGION: ${{ vars.S3_REGION }}
+          SIGNCLIENT_CERT_ID: ${{ vars.SIGNCLIENT_CERT_ID }}
+          SIGNCLIENT_KEY: ${{ secrets.SIGNCLIENT_KEY }}
+          WANLAICODE_CHANNEL: prod
+          WANLAICODE_DISPATCH_CHANNEL: prod
+          WANLAICODE_VERSION: ${{ needs.verify-tag.outputs.version }}
+
+      - name: Package Linux
+        if: matrix.name == 'linux-x64'
+        shell: bash
+        run: npx electron-builder ${{ matrix.package_flag }} --publish never --config electron-builder.config.ts
+        working-directory: packages/desktop
+        env:
+          MODELS_DEV_API_JSON: ""
+          RUST_TARGET: ${{ matrix.target }}
+          S3_BUCKET: ${{ vars.S3_BUCKET }}
+          S3_ENDPOINT: ${{ vars.S3_ENDPOINT }}
+          S3_REGION: ${{ vars.S3_REGION }}
+          WANLAICODE_CHANNEL: prod
+          WANLAICODE_DISPATCH_CHANNEL: prod
+          WANLAICODE_VERSION: ${{ needs.verify-tag.outputs.version }}
+
+      - name: Verify macOS signatures and notarization ticket
+        if: startsWith(matrix.name, 'mac-')
+        shell: bash
+        working-directory: packages/desktop
+        run: |
+          set -euo pipefail
+          app=$(find dist -maxdepth 3 -name '*.app' -type d -print -quit)
+          test -n "$app"
+          codesign --verify --deep --strict "$app"
+          spctl --assess --type execute "$app"
+          for dmg in dist/*.dmg; do xcrun stapler validate "$dmg"; done
+
+      - name: Verify Windows Authenticode signatures
+        if: matrix.name == 'win-x64'
+        shell: pwsh
+        working-directory: packages/desktop
+        run: |
+          $ErrorActionPreference = "Stop"
+          $files = @(
+            Get-ChildItem dist -File -Filter *.exe
+            Get-ChildItem dist -Directory -Filter *-unpacked | ForEach-Object { Get-ChildItem $_.FullName -File -Filter *.exe }
+          ) | Sort-Object FullName -Unique
+          if ($files.Count -eq 0) { throw "No Windows artifacts found for signature verification" }
+          foreach ($file in $files) {
+            $signature = Get-AuthenticodeSignature $file.FullName
+            if ($signature.Status -ne "Valid") { throw "Invalid signature: $($file.FullName) [$($signature.Status)]" }
+          }
+
+      - name: Upload signed artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ matrix.name }}
+          path: ${{ matrix.artifacts }}
+          if-no-files-found: error
+          retention-days: 1
+
+  draft-release:
+    needs: [verify-tag, build-and-sign]
+    environment: release
+    runs-on: ubuntu-24.04
+    permissions:
+      attestations: write
+      contents: write
+      id-token: write
+    steps:
+      - name: Download all signed artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          merge-multiple: true
+          path: release-assets
+
+      - name: Generate SHA-256 manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd release-assets
+          find . -type f -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS
+
+      - name: Attest release artifacts
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: release-assets/**
+
+      - name: Create or update Draft GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" --json isDraft --jq .isDraft >/tmp/is-draft 2>/dev/null; then
+            test "$(cat /tmp/is-draft)" = "true" || {
+              echo "::error::拒绝覆盖已经公开的 Release"
+              exit 1
+            }
+            gh release upload "$TAG" release-assets/* --clobber
+            exit 0
+          fi
+          gh release create "$TAG" release-assets/* --draft --verify-tag --title "WanLai Code $TAG" --generate-notes

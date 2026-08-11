@@ -1,0 +1,1215 @@
+/* File/diff viewer colors: see pierre/file-ui-theme.css (Monokai) */
+
+[data-component="session-turn"] {
+  --sticky-header-height: calc(var(--session-title-height, 0px) + 24px);
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+
+  [data-slot="session-turn-content"] {
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    overflow-y: auto;
+    scrollbar-width: none;
+    scroll-behavior: smooth;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  [data-slot="session-turn-content"]::-webkit-scrollbar {
+    display: none;
+  }
+
+  [data-slot="session-turn-message-container"] {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    align-self: stretch;
+    min-width: 0;
+    gap: 0px;
+  }
+
+  /* 这里刻意不写 overflow-anchor: none。
+     用户向上滚动阅读时 auto-scroll 完全不介入（userScrolled=true），浏览器滚动锚定
+     是唯一能补偿上方高度突变的机制 —— 工具卡片从「正在编辑」重组为「已编辑 N 个文件」、
+     content-visibility 轮次去虚拟化，都会让上方高度暴增，无锚点则视口直接滑向上一轮。
+     跟随底部时 auto-scroll 每帧 scrollTop = scrollHeight 硬置底，本就盖过锚定，不冲突。
+     活跃轮同样需要锚定：用户正是在活跃轮内部向上滚动阅读的。 */
+
+  [data-slot="session-turn-message-content"] {
+    margin-top: 0;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  [data-slot="session-turn-compaction"] {
+    width: 100%;
+    min-width: 0;
+    align-self: stretch;
+  }
+
+  [data-slot="session-turn-thinking"] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    width: 100%;
+    min-width: 0;
+    color: var(--text-weak);
+    font-family: var(--font-family-sans);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-regular);
+    line-height: 20px;
+    min-height: 20px;
+
+    [data-component="spinner"] {
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  [data-slot="session-turn-thinking-trigger"] {
+    margin-top: 10px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    cursor: pointer;
+    position: relative;
+    padding-top: 2px;
+    padding-bottom: 8px;
+  }
+
+  [data-slot="session-turn-thinking-trigger"]::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: var(--border-weaker-base);
+  }
+
+  [data-slot="session-turn-thinking-summary"] {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding-right: 8px;
+    background: var(--background-base);
+    --collapsible-arrow-scale: 1.2;
+  }
+
+  /* 推理头部：不再出现整行灰底；键盘聚焦时只在文字处显示细轮廓环（无障碍 WCAG 2.4.7） */
+  [data-component="collapsible"][data-scope="reasoning"] > [data-slot="collapsible-trigger"]:focus-visible {
+    background-color: transparent;
+  }
+
+  [data-component="collapsible"][data-scope="reasoning"]
+    > [data-slot="collapsible-trigger"]:focus-visible
+    [data-slot="session-turn-thinking-summary"] {
+    border-radius: var(--radius-sm);
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+  }
+
+  [data-slot="session-turn-thinking-label"] {
+    font-family: var(--font-family-sans);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-regular);
+    line-height: 20px;
+    letter-spacing: -0.01em;
+    color: var(--text-weaker);
+  }
+
+  [data-slot="session-turn-thinking-content"] {
+    width: 100%;
+    min-width: 0;
+    padding-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* 组级「显示原文 / 隐藏原文」：右上角蓝色文字按钮，整组一个 */
+  [data-slot="session-turn-thinking-content"] > [data-slot="reasoning-original-toggle"] {
+    align-self: flex-end;
+    margin-bottom: -4px;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-interactive-base);
+    transition: opacity 0.15s ease;
+  }
+
+  [data-slot="session-turn-thinking-content"] > [data-slot="reasoning-original-toggle"]:hover {
+    opacity: 0.7;
+  }
+
+  [data-slot="session-turn-thinking-content"] > [data-slot="reasoning-original-toggle"]:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  [data-slot="session-turn-assistant-final-content"] {
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  [data-slot="session-turn-generated-image-gallery"] {
+    display: flex;
+    width: min(100%, 400px);
+    min-width: 0;
+    gap: 8px;
+    overflow: hidden;
+  }
+
+  [data-slot="session-turn-generated-image-gallery"]:not([data-count="1"]) {
+    width: min(100%, 760px);
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  [data-slot="session-turn-generated-image-preview"] {
+    appearance: none;
+    display: block;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--surface-weak);
+    cursor: pointer;
+    line-height: 0;
+  }
+
+  [data-slot="session-turn-generated-image-gallery"][data-count="1"]
+    [data-slot="session-turn-generated-image-preview"] {
+    width: 100%;
+  }
+
+  [data-slot="session-turn-generated-image-gallery"]:not([data-count="1"])
+    [data-slot="session-turn-generated-image-preview"] {
+    width: clamp(150px, calc(25% - 6px), 180px);
+    aspect-ratio: 1;
+    flex: 0 1 clamp(150px, calc(25% - 6px), 180px);
+  }
+
+  [data-slot="session-turn-generated-image-preview"]:hover {
+    filter: brightness(0.98);
+  }
+
+  [data-slot="session-turn-generated-image-preview"]:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+  }
+
+  [data-slot="session-turn-generated-image"] {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+  }
+
+  [data-slot="session-turn-generated-image-gallery"]:not([data-count="1"]) [data-slot="session-turn-generated-image"] {
+    height: 100%;
+    object-fit: cover;
+  }
+
+  [data-slot="session-turn-edit-summary"] {
+    --edit-card-btn-radius: 8px;
+    --edit-card-btn-font-size: 15px;
+    --edit-card-btn-line-height: 22px;
+    --edit-card-btn-padding-block: 4px;
+    --edit-card-btn-padding-inline: 10px;
+    --edit-card-btn-padding-inline-wide: 12px;
+    --edit-card-btn-icon-size: 30px;
+    --edit-card-btn-menu-padding-block: 4px;
+    --edit-card-btn-menu-padding-inline: 3px;
+    --edit-card-btn-border: 1px solid var(--border-weak-base);
+    --edit-card-btn-bg: var(--background-base);
+    --edit-card-btn-hover-bg: color-mix(in srgb, var(--background-base) 92%, var(--text-strong) 8%);
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 6px;
+    padding-bottom: 8px;
+  }
+
+  [data-slot="session-turn-edit-md-cards"] {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Featured doc card + file-change summary: sharper corners, hairline borders, ~1.1× type scale */
+  [data-slot="session-turn-edit-md-card"] {
+    display: flex;
+    align-items: center;
+    height: 72px;
+    gap: 14px;
+    padding: 13px;
+    border: 1px solid var(--border-weak-base);
+    border-radius: 10px;
+    background: var(--background-base);
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease;
+    /* box-shadow: var(--shadow-xs-border-base); */
+  }
+
+  [data-slot="session-turn-edit-md-card"]:hover {
+    background: color-mix(in srgb, var(--background-base) 98%, var(--text-strong) 2%);
+    border-color: var(--border-base);
+  }
+
+  [data-slot="session-turn-edit-md-icon"],
+  [data-slot="session-turn-edit-diff-summary-title-icon"] {
+    width: 46px;
+    height: 46px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    border: 0.5px solid color-mix(in srgb, var(--border-weaker-base) 42%, var(--background-base));
+    background: color-mix(in srgb, var(--background-base) 96%, var(--text-strong) 4%);
+    color: #424242;
+  }
+
+  @supports not (border-width: 0.5px) {
+    [data-slot="session-turn-edit-md-icon"],
+    [data-slot="session-turn-edit-diff-summary-title-icon"] {
+      border-width: 1px;
+      border-color: color-mix(in srgb, var(--border-weaker-base) 65%, var(--background-base));
+    }
+  }
+
+  [data-slot="session-turn-edit-md-main"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  [data-slot="session-turn-edit-md-name"] {
+    color: var(--text-strong);
+    font-family: var(--font-family-sans);
+    font-size: 14px;
+    font-weight: var(--font-weight-medium);
+    line-height: 20px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  [data-slot="session-turn-edit-md-meta"] {
+    color: var(--text-weak);
+    font-family: var(--font-family-sans);
+    font-size: 12px;
+    font-weight: var(--font-weight-regular);
+    line-height: 18px;
+  }
+
+  [data-slot="session-turn-edit-md-open"] {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: var(--edit-card-btn-padding-block) var(--edit-card-btn-padding-inline-wide);
+    border: var(--edit-card-btn-border);
+    border-radius: var(--edit-card-btn-radius);
+    background: var(--edit-card-btn-bg);
+    color: var(--text-strong);
+    font-family: var(--font-family-sans);
+    font-size: var(--edit-card-btn-font-size);
+    line-height: var(--edit-card-btn-line-height);
+    cursor: pointer;
+    transition:
+      background-color 0.12s ease,
+      border-color 0.12s ease;
+  }
+
+  [data-slot="session-turn-edit-md-open"]:hover:not(:disabled) {
+    border-color: transparent;
+    background: var(--edit-card-btn-hover-bg);
+  }
+
+  /* Split-button: 主「打开」按钮 + 右侧 chevron（同一个 pill 内，竖线分隔）*/
+  [data-slot="session-turn-edit-md-open-group"] {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: stretch;
+  }
+
+  /* split 模式：外框转交给 group，两个内部按钮共享同一圆角框 */
+  [data-slot="session-turn-edit-md-open-group"][data-split="true"] {
+    border: var(--edit-card-btn-border);
+    border-radius: var(--edit-card-btn-radius);
+    background: var(--edit-card-btn-bg);
+    transition:
+      background-color 0.12s ease,
+      border-color 0.12s ease;
+  }
+
+  /* split 模式下主「打开」按钮：去 border / bg，保留左半圆角让 hover 高亮不溢出外框 */
+  [data-slot="session-turn-edit-md-open-group"][data-split="true"] [data-slot="session-turn-edit-md-open"] {
+    border: 0;
+    background: transparent;
+    border-radius: var(--edit-card-btn-radius) 0 0 var(--edit-card-btn-radius);
+    padding-right: var(--edit-card-btn-padding-inline);
+  }
+
+  [data-slot="session-turn-edit-md-open-group"][data-split="true"]
+    [data-slot="session-turn-edit-md-open"]:hover:not(:disabled) {
+    background: var(--edit-card-btn-hover-bg);
+    border: 0;
+  }
+
+  /* chevron 按钮：唯一的可见 border 是左侧竖线分隔；圆角对齐外框右半边 */
+  [data-slot="session-turn-edit-md-open-menu"] {
+    position: relative;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    padding: var(--edit-card-btn-menu-padding-block) var(--edit-card-btn-menu-padding-inline);
+    border: 0;
+    border-left: 1px solid var(--border-weak-base);
+    border-radius: 0 var(--edit-card-btn-radius) var(--edit-card-btn-radius) 0;
+    background: transparent;
+    color: var(--text-strong);
+    cursor: pointer;
+    transition:
+      background-color 0.12s ease,
+      color 0.12s ease;
+  }
+
+  [data-slot="session-turn-edit-md-open-menu"]:hover:not([data-disabled]),
+  [data-slot="session-turn-edit-md-open-menu"][data-expanded] {
+    background: var(--edit-card-btn-hover-bg);
+    color: var(--text-strong);
+  }
+
+  [data-slot="session-turn-edit-md-open-menu"] [data-slot="icon-svg"] {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+  }
+
+  [data-slot="session-turn-edit-md-icon"] [data-component="icon"],
+  [data-slot="session-turn-edit-diff-summary-title-icon"] [data-component="icon"] {
+    width: 25px;
+    height: 25px;
+  }
+
+  [data-slot="session-turn-edit-diff-summary-title-icon"] [data-component="icon"] {
+    width: 21px;
+    height: 21px;
+  }
+
+  [data-slot="session-turn-edit-md-icon"] [data-slot="icon-svg"],
+  [data-slot="session-turn-edit-diff-summary-title-icon"] [data-slot="icon-svg"] {
+    width: 25px;
+    height: 25px;
+    border-radius: 5px;
+  }
+
+  [data-slot="session-turn-edit-diff-summary-title-icon"] [data-slot="icon-svg"] {
+    width: 21px;
+    height: 21px;
+    border-radius: 0;
+  }
+
+  [data-slot="session-turn-edit-diff-summary"] {
+    border: 1px solid var(--border-weak-base);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--background-base);
+    /* box-shadow: var(--shadow-xs-border-base); */
+    padding: 0;
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease;
+  }
+
+  [data-slot="session-turn-edit-diff-summary"]:hover {
+    background: color-mix(in srgb, var(--background-base) 98%, var(--text-strong) 2%);
+    border-color: var(--border-base);
+  }
+
+  [data-slot="session-turn-edit-diff-summary-header"] {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 72px;
+    gap: 16px;
+    padding: 13px;
+    border-bottom: none;
+  }
+
+  [data-slot="session-turn-edit-diff-summary-header"] > [data-slot="hover-card-trigger"] {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  [data-slot="session-turn-edit-diff-summary-header"]:not(:last-child) {
+    border-bottom: 1px solid var(--border-weak-base);
+  }
+
+  [data-slot="session-turn-edit-diff-summary-header"]:last-child {
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+  }
+
+  [data-slot="session-turn-edit-diff-summary-title"] {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  [data-slot="session-turn-edit-diff-summary-title-copy"] {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  [data-slot="session-turn-edit-diff-summary-title-text"] {
+    color: var(--text-strong);
+    font-family: var(--font-family-sans);
+    font-size: 16px;
+    font-weight: var(--font-weight-medium);
+    line-height: 22px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  [data-slot="session-turn-edit-diff-summary-title-subtext"] {
+    color: var(--text-weak);
+    font-family: var(--font-family-sans);
+    font-size: 14px;
+    font-weight: var(--font-weight-regular);
+    line-height: 20px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  [data-slot="session-turn-edit-diff-summary"] [data-component="diff-changes"] [data-slot="diff-changes-additions"],
+  [data-slot="session-turn-edit-diff-summary"] [data-component="diff-changes"] [data-slot="diff-changes-deletions"] {
+    font-size: calc(14px * 1.1);
+    line-height: var(--line-height-large);
+  }
+
+  [data-slot="session-turn-edit-diff-summary-title-subtext"]
+    [data-component="diff-changes"]
+    [data-slot="diff-changes-additions"] {
+    color: var(--text-diff-add-base);
+  }
+
+  [data-slot="session-turn-edit-diff-summary-title-subtext"]
+    [data-component="diff-changes"]
+    [data-slot="diff-changes-deletions"] {
+    color: var(--text-diff-delete-base);
+  }
+
+  [data-slot="session-turn-edit-diff-summary-actions"] {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 0 0 auto;
+  }
+
+  [data-slot="session-turn-edit-diff-summary-actions"] [data-component="button"] {
+    height: auto;
+    border-radius: var(--edit-card-btn-radius);
+    font-size: var(--edit-card-btn-font-size);
+    line-height: var(--edit-card-btn-line-height);
+    padding: var(--edit-card-btn-padding-block) var(--edit-card-btn-padding-inline);
+    border: var(--edit-card-btn-border);
+    background: var(--edit-card-btn-bg);
+    color: var(--text-strong);
+    transition:
+      background-color 0.12s ease,
+      border-color 0.12s ease;
+  }
+
+  [data-slot="session-turn-edit-diff-summary-actions"] [data-component="button"]:hover:not([data-disabled]) {
+    border-color: transparent;
+    background: var(--edit-card-btn-hover-bg);
+  }
+
+  [data-slot="session-turn-edit-diff-summary-actions"] [data-slot="session-turn-edit-diff-undo-button"] {
+    border: transparent;
+    background: transparent;
+  }
+
+  [data-slot="session-turn-edit-diff-action-pair"] {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  [data-slot="session-turn-edit-diff-action-pair"] [data-component="icon"] {
+    color: var(--text-strong);
+    flex-shrink: 0;
+  }
+
+  [data-slot="session-turn-edit-diff-summary-list"] {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 10px;
+  }
+
+  [data-slot="session-turn-edit-diff-summary-row"] {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  [data-slot="session-turn-edit-diff-summary-file"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    color: var(--text-weak);
+    font-family: var(--font-family-mono);
+    font-size: calc(12px * 1.1);
+    line-height: calc(16px * 1.1);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  [data-slot="session-turn-edit-diff-summary-changes"] {
+    flex: 0 0 auto;
+    color: var(--text-weak);
+    font-variant-numeric: tabular-nums;
+  }
+
+  [data-slot="session-turn-edit-diff-accordion"] {
+    /* padding: 0 12px 12px; */
+  }
+
+  /* 超长变更列表按批次追加；末尾入口保留完整查看能力，同时避免首屏一次挂载上千行。 */
+  [data-slot="session-turn-edit-diff-more"] {
+    display: flex;
+    width: 100%;
+    min-height: 36px;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-top: 1px solid var(--border-weak-base);
+    background: var(--background-base);
+    color: var(--text-interactive-base);
+    font-family: var(--font-family-sans);
+    font-size: var(--font-size-small);
+    cursor: pointer;
+  }
+
+  [data-slot="session-turn-edit-diff-more"]:hover {
+    background-color: color-mix(in srgb, var(--background-base) 98%, var(--text-strong) 2%);
+    color: var(--text-interactive-stronger);
+  }
+
+  [data-slot="session-turn-edit-diff-list-wrap"] {
+    display: flex;
+    align-items: stretch;
+    max-height: min(420px, 45dvh);
+    min-height: 0;
+  }
+
+  [data-slot="session-turn-edit-diff-list-scroll"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-height: inherit;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    /* Nested scroll: page-level sticky offset would float file headers over diff content */
+    --sticky-accordion-top: 0px;
+    --sticky-accordion-offset: 0px;
+  }
+
+  [data-slot="session-turn-edit-diff-list-scroll"]::-webkit-scrollbar {
+    display: none;
+  }
+
+  [data-slot="session-turn-edit-diff-list-scroll"][data-thumb-dragging="true"] {
+    scroll-behavior: auto;
+  }
+
+  [data-slot="session-turn-edit-diff-scrollbar-rail"] {
+    flex: 0 0 14px;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid var(--border-weak-base);
+    background: color-mix(in srgb, var(--border-weak-base) 28%, var(--background-base));
+  }
+
+  [data-slot="session-turn-edit-diff-scrollbar-arrow"] {
+    flex: 0 0 17px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: default;
+  }
+
+  [data-slot="session-turn-edit-diff-scrollbar-arrow"]::before {
+    content: "";
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+  }
+
+  [data-slot="session-turn-edit-diff-scrollbar-arrow"][data-direction="up"]::before {
+    border-bottom: 5px solid color-mix(in srgb, var(--text-weak) 88%, transparent);
+  }
+
+  [data-slot="session-turn-edit-diff-scrollbar-arrow"][data-direction="down"]::before {
+    border-top: 5px solid color-mix(in srgb, var(--text-weak) 88%, transparent);
+  }
+
+  [data-slot="session-turn-edit-diff-scrollbar-arrow"][data-direction="up"]:hover::before {
+    border-bottom-color: var(--text-strong);
+  }
+
+  [data-slot="session-turn-edit-diff-scrollbar-arrow"][data-direction="down"]:hover::before {
+    border-top-color: var(--text-strong);
+  }
+
+  [data-slot="session-turn-edit-diff-scrollbar-track"] {
+    flex: 1 1 auto;
+    position: relative;
+    min-height: 0;
+    cursor: default;
+    touch-action: none;
+    user-select: none;
+  }
+
+  [data-slot="session-turn-edit-diff-scrollbar-thumb"] {
+    position: absolute;
+    left: 3px;
+    right: 3px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--text-weak) 82%, transparent);
+    touch-action: none;
+    user-select: none;
+  }
+
+  [data-slot="session-turn-edit-diff-scrollbar-thumb"]::after {
+    content: "";
+    position: absolute;
+    top: -4px;
+    bottom: -4px;
+    left: -2px;
+    right: -2px;
+  }
+
+  [data-slot="session-turn-edit-diff-scrollbar-thumb"][data-dragging="true"] {
+    background: color-mix(in srgb, var(--text-strong) 72%, transparent);
+  }
+
+  [data-slot="session-turn-edit-diff-summary-actions"] [data-component="icon-button"] {
+    width: var(--edit-card-btn-icon-size);
+    min-width: var(--edit-card-btn-icon-size);
+    height: var(--edit-card-btn-icon-size);
+    min-height: var(--edit-card-btn-icon-size);
+    margin-left: 6px;
+    border-radius: var(--edit-card-btn-radius);
+    border: var(--edit-card-btn-border);
+    background: var(--edit-card-btn-bg);
+    color: var(--text-strong);
+    transition:
+      background-color 0.12s ease,
+      border-color 0.12s ease;
+  }
+
+  [data-slot="session-turn-edit-diff-summary-actions"] [data-component="icon-button"]:hover:not(:disabled) {
+    border-color: transparent;
+    background: var(--edit-card-btn-hover-bg);
+  }
+
+  [data-slot="session-turn-edit-diff-summary-actions"] [data-component="icon-button"] [data-slot="icon-svg"] {
+    color: var(--text-strong);
+  }
+
+  [data-slot="session-turn-edit-diff-summary-title-subtext"] [data-component="diff-changes"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  [data-slot="session-turn-edit-diff-summary-title-subtext"]
+    [data-component="diff-changes"]
+    [data-slot="diff-changes-additions"],
+  [data-slot="session-turn-edit-diff-summary-title-subtext"]
+    [data-component="diff-changes"]
+    [data-slot="diff-changes-deletions"] {
+    font-size: 15px;
+    line-height: 20px;
+  }
+
+  [data-slot="session-turn-edit-diff-review-button"] {
+    padding-inline: var(--edit-card-btn-padding-inline-wide);
+  }
+
+  /* File rows: outer card owns perimeter; rows only use top dividers */
+  [data-slot="session-turn-edit-diff-accordion"] [data-slot="accordion-header"] [data-slot="accordion-trigger"] {
+    height: auto;
+    min-height: 36px;
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 0;
+    background-color: var(--background-base);
+  }
+
+  [data-slot="session-turn-edit-diff-accordion"]
+    [data-slot="accordion-item"]
+    + [data-slot="accordion-item"]
+    [data-slot="accordion-header"]
+    [data-slot="accordion-trigger"] {
+    border-top: 1px solid var(--border-weak-base);
+  }
+
+  [data-slot="session-turn-edit-diff-accordion"]
+    [data-slot="accordion-item"]:first-child
+    [data-slot="accordion-header"]
+    [data-slot="accordion-trigger"],
+  [data-slot="session-turn-edit-diff-accordion"]
+    [data-slot="accordion-item"]:last-child:not([data-expanded])
+    [data-slot="accordion-header"]
+    [data-slot="accordion-trigger"],
+  [data-slot="session-turn-edit-diff-accordion"]
+    [data-slot="accordion-item"]:last-child[data-expanded]
+    [data-slot="accordion-content"] {
+    border-radius: 0;
+  }
+
+  [data-slot="session-turn-edit-diff-accordion"]
+    [data-slot="accordion-header"]
+    [data-slot="accordion-trigger"]:hover:not([data-disabled]) {
+    background-color: color-mix(in srgb, var(--background-base) 98%, var(--text-strong) 2%);
+  }
+
+  [data-slot="session-turn-edit-diff-accordion"]
+    [data-slot="accordion-item"][data-expanded]
+    [data-slot="accordion-content"] {
+    background-color: var(--background-base);
+  }
+
+  [data-slot="session-turn-edit-diff-trigger"] {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Left-ellipsis for long paths: keep filename visible */
+  [data-slot="session-turn-edit-diff-path"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    direction: rtl;
+    text-align: left;
+    font-family: var(--font-family-mono);
+    font-size: calc(12px * 1.1);
+    line-height: calc(16px * 1.1);
+    color: light-dark(var(--text-strong), var(--text-strongest));
+  }
+
+  [data-slot="session-turn-edit-diff-added-dot"] {
+    display: inline-block;
+    inline-size: 5.5px;
+    block-size: 5.5px;
+    flex-shrink: 0;
+    margin-left: 6px;
+    border-radius: 999px;
+    background-color: var(--icon-interactive-base);
+    line-height: 0;
+    font-size: 0;
+  }
+
+  [data-slot="session-turn-edit-diff-meta"] {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-weak);
+  }
+
+  [data-slot="session-turn-edit-diff-meta"] [data-component="diff-changes"] [data-slot="diff-changes-additions"],
+  [data-slot="session-turn-edit-diff-meta"] [data-component="diff-changes"] [data-slot="diff-changes-deletions"] {
+    font-size: calc(14px * 1.1);
+    line-height: var(--line-height-large);
+  }
+
+  [data-slot="session-turn-edit-diff-meta"] [data-component="diff-changes"] [data-slot="diff-changes-additions"] {
+    color: var(--text-diff-add-base);
+  }
+
+  [data-slot="session-turn-edit-diff-meta"] [data-component="diff-changes"] [data-slot="diff-changes-deletions"] {
+    color: var(--text-diff-delete-base);
+  }
+
+  [data-slot="session-turn-edit-diff-meta-swap"] {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  [data-slot="session-turn-edit-diff-link-icon"] {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    color: var(--icon-interactive-base);
+    cursor: pointer;
+  }
+
+  [data-slot="session-turn-edit-diff-trigger"]:hover [data-slot="session-turn-edit-diff-changes"],
+  [data-slot="session-turn-edit-diff-trigger"]:focus-within [data-slot="session-turn-edit-diff-changes"] {
+    opacity: 0;
+  }
+
+  [data-slot="session-turn-edit-diff-trigger"]:hover [data-slot="session-turn-edit-diff-link-icon"],
+  [data-slot="session-turn-edit-diff-trigger"]:focus-within [data-slot="session-turn-edit-diff-link-icon"] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  [data-slot="session-turn-edit-diff-view"] {
+    margin-top: 8px;
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  /* 通过 override 变量穿透 Shadow DOM 设置 diff 背景色 */
+  [data-slot="session-turn-edit-diff-view"] {
+    --diffs-bg-override: var(--diffs-custom-bg);
+  }
+
+  [data-slot="session-turn-edit-diff-view"] [data-diff] *,
+  [data-slot="session-turn-edit-diff-view"] [data-file] * {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  /* diff 视图内代码可选中 */
+  [data-slot="session-turn-diff-view"] [data-diff] *,
+  [data-slot="session-turn-diff-view"] [data-file] * {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  /* 选中色使用浏览器默认，自动适配深色/浅色 */
+  [data-slot="session-turn-edit-diff-view"] [data-diff] ::selection,
+  [data-slot="session-turn-edit-diff-view"] [data-file] ::selection,
+  [data-slot="session-turn-diff-view"] [data-diff] ::selection,
+  [data-slot="session-turn-diff-view"] [data-file] ::selection {
+    background-color: Highlight;
+    color: HighlightText;
+  }
+
+  [data-component="text-reveal"].session-turn-thinking-heading {
+    flex: 1 1 auto;
+    min-width: 0;
+    color: var(--text-weaker);
+    font-weight: var(--font-weight-regular);
+  }
+
+  [data-slot="session-turn-inline-notice-wrap"] {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding-top: 6px;
+  }
+
+  [data-component="card"].inline-notice-card {
+    --icon-base: var(--text-strong);
+    display: grid;
+    grid-template-columns: min-content minmax(0, 1fr);
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    margin-inline: auto;
+    padding: 7px 12px;
+    border: 1px solid var(--border-weak-base);
+    border-radius: var(--radius-xl);
+    background: var(--background-base);
+    color: var(--text-strong);
+    box-shadow: var(--shadow-xs);
+    max-height: 240px;
+    overflow-y: auto;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  [data-component="card"].inline-notice-card::before {
+    display: none;
+  }
+
+  [data-slot="session-turn-inline-notice-icon"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+    color: var(--icon-base);
+  }
+
+  [data-slot="session-turn-inline-notice-content"],
+  [data-slot="session-turn-inline-notice-message"] {
+    min-width: 0;
+    color: var(--text-strong);
+    font-family: var(--font-family-sans);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-large);
+  }
+
+  [data-slot="session-turn-inline-notice-content"] {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  [data-slot="session-turn-error-message"],
+  [data-slot="session-turn-error-detail"] {
+    white-space: pre-wrap;
+  }
+
+  [data-slot="session-turn-inline-notice-message"] {
+    white-space: nowrap;
+    overflow-wrap: anywhere;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  [data-slot="session-turn-assistant-content"] {
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+    gap: 12px;
+  }
+
+  /* 引导消息是同一逻辑 turn 的普通用户气泡：展开时按 item 原序，折叠后仍保持可见。 */
+  [data-slot="session-turn-steering-message"],
+  [data-slot="session-turn-persistent-steering-messages"] {
+    width: 100%;
+    min-width: 0;
+  }
+
+  [data-slot="session-turn-persistent-steering-messages"] {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 12px;
+  }
+
+  [data-slot="session-turn-diffs"] {
+    width: 100%;
+    min-width: 0;
+  }
+
+  [data-slot="session-turn-diffs-header"] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 4px;
+    padding-bottom: 12px;
+    position: sticky;
+    top: var(--sticky-accordion-top, 0px);
+    z-index: 20;
+    background-color: var(--background-stronger);
+    height: 44px;
+  }
+
+  [data-slot="session-turn-diffs-label"] {
+    font-variant-numeric: tabular-nums;
+    color: var(--text-strong);
+    font-family: var(--font-family-sans);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-large);
+  }
+
+  [data-slot="session-turn-diffs-toggle"] {
+    color: var(--text-interactive-base);
+    font-family: var(--font-family-sans);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-large);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    margin-left: 4px;
+  }
+
+  [data-component="session-turn-diffs-group"]:hover [data-slot="session-turn-diffs-toggle"] {
+    opacity: 1;
+  }
+
+  [data-component="session-turn-diffs-group"][data-show-all] [data-slot="session-turn-diffs-toggle"] {
+    opacity: 1;
+  }
+
+  [data-slot="session-turn-diffs-more"] {
+    color: var(--text-weak);
+    font-family: var(--font-family-sans);
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-large);
+    margin-top: 12px;
+    padding: 0 0 6px;
+    cursor: pointer;
+    transition: color 0.15s ease;
+
+    &:hover {
+      color: var(--text-link-base);
+    }
+  }
+
+  [data-component="session-turn-diffs-content"] {
+    padding-top: 0px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  [data-slot="session-turn-diff-trigger"] {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  [data-slot="session-turn-diff-path"] {
+    display: flex;
+    flex-grow: 1;
+    min-width: 0;
+
+    font-family: var(--font-family-sans);
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-large);
+  }
+
+  [data-slot="session-turn-diff-directory"] {
+    color: var(--text-base);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    direction: rtl;
+    text-align: left;
+  }
+
+  [data-slot="session-turn-diff-filename"] {
+    min-width: 0;
+    color: var(--text-strong);
+    font-weight: var(--font-weight-regular);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  [data-slot="session-turn-diff-meta"] {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  [data-slot="session-turn-diff-chevron"] {
+    display: inline-flex;
+    color: var(--icon-weaker);
+    transform: rotate(-90deg);
+    transition: transform 0.15s ease;
+  }
+
+  [data-slot="accordion-item"][data-expanded] [data-slot="session-turn-diff-chevron"] {
+    transform: rotate(0deg);
+  }
+
+  [data-slot="session-turn-diff-view"] {
+    background-color: var(--surface-inset-base);
+    width: 100%;
+    min-width: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-behavior: smooth;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  [data-slot="session-turn-diff-view"]::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+[data-slot="session-turn-list"] {
+  gap: 24px;
+}
+
+/* Codex-style chat tweaks (scoped) */
+[data-ui="codex-chat"] {
+  [data-slot="session-turn-list"] {
+    gap: 20px;
+    padding-bottom: 88px;
+  }
+
+  [data-component="session-turn"] {
+    [data-slot="session-turn-message-container"] {
+      gap: 10px;
+    }
+
+    [data-slot="session-turn-thinking"] {
+      margin-top: 10px;
+    }
+  }
+}

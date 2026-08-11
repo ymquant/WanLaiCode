@@ -1,0 +1,47 @@
+export const dict = {
+  "desktop.menu.checkForUpdates": "檢查更新...",
+  "desktop.menu.installCli": "安裝 CLI...",
+  "desktop.menu.reloadWebview": "重新載入 Webview",
+  "desktop.menu.restart": "重新啟動",
+
+  "desktop.dialog.chooseFolder": "選擇資料夾",
+  "desktop.dialog.chooseFile": "選擇檔案",
+  "desktop.dialog.saveFile": "儲存檔案",
+
+  "desktop.contextMenu.saveImageAs": "圖片另存為...",
+  "desktop.contextMenu.copyImage": "複製圖片",
+  "desktop.contextMenu.inspect": "檢查元素",
+
+  "desktop.updater.checkFailed.title": "檢查更新失敗",
+  "desktop.updater.checkFailed.message": "無法檢查更新",
+  "desktop.updater.none.title": "沒有可用更新",
+  "desktop.updater.none.message": "你已在使用最新版的 萬來Code",
+  "desktop.updater.downloadFailed.title": "更新失敗",
+  "desktop.updater.downloadFailed.message": "無法下載更新",
+  "desktop.updater.downloaded.title": "更新已下載",
+  "desktop.updater.downloaded.prompt": "已下載 萬來Code {{version}} 版本，是否安裝並重新啟動？",
+  "desktop.updater.installFailed.title": "更新失敗",
+  "desktop.updater.installFailed.message": "無法安裝更新",
+
+  "desktop.updater.progress.windowTitle": "正在更新 {{appName}}",
+  "desktop.updater.progress.preparing": "正在準備更新...",
+  "desktop.updater.progress.downloading": "正在下載更新...",
+  "desktop.updater.progress.installing": "正在安裝更新...",
+  "desktop.updater.progress.failed": "更新失敗",
+  "desktop.updater.progress.cancelled": "已取消更新",
+  "desktop.updater.progress.cancel": "取消",
+  "desktop.updater.progress.close": "關閉",
+  "desktop.updater.progress.confirmInstallTitle": "重新啟動以完成更新？",
+  "desktop.updater.progress.confirmInstallDetail": "還有 {{count}} 個會話正在執行，立即重新啟動會中斷它們。",
+  "desktop.updater.progress.installNow": "立即重新啟動",
+  "desktop.updater.progress.later": "稍後",
+
+  "desktop.cli.installed.title": "CLI 已安裝",
+  "desktop.cli.installed.message": "CLI 已安裝到 {{path}}\n\n重新啟動終端機以使用 '萬來Code' 命令。",
+  "desktop.cli.failed.title": "安裝失敗",
+  "desktop.cli.failed.message": "無法安裝 CLI: {{error}}",
+
+  "desktop.tray.recent": "最近",
+  "desktop.tray.more": "更多",
+  "desktop.tray.open": "打開 {{appName}}",
+}

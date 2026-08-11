@@ -1,0 +1,1514 @@
+/*
+ * 自动化页专属设计底子 —— 像素级复刻 OpenAI Codex 浅色主题。
+ * token 取自 Codex app-main.css 的 .electron-light 真值(圆角含 ×1.25 缩放),
+ * 仅作用于 .cdx 作用域,不影响万来Code 全局 oc-2 主题。
+ */
+.cdx {
+  /* 颜色(浅色,复刻 Codex .electron-light)。暗色覆盖见 .cdx 块尾的嵌套 @media (prefers-color-scheme: dark) */
+  --cdx-text: #1a1c1f;
+  --cdx-text-2: color-mix(in oklab, #1a1c1f 70%, transparent);
+  --cdx-text-3: color-mix(in oklab, #1a1c1f 50%, transparent);
+  --cdx-bg: #fff;
+  --cdx-elevated: #fff;
+  --cdx-surface: color-mix(in oklab, #1a1c1f 3%, transparent);
+  --cdx-surface-hover: color-mix(in oklab, #1a1c1f 5%, transparent);
+  --cdx-border: color-mix(in oklab, #1a1c1f 8%, transparent);
+  --cdx-border-light: color-mix(in oklab, #1a1c1f 5%, transparent);
+  --cdx-border-heavy: color-mix(in oklab, #1a1c1f 12%, transparent);
+  --cdx-focus: #339cff;
+  --cdx-primary: #0d0d0d;
+  --cdx-on-primary: #fff;
+  /* 实底主按钮 hover(split 按钮另走半透 color-mix,不复用此值) */
+  --cdx-primary-hover: #000;
+  --cdx-danger: #e02e2a;
+
+  /* 圆角(Codex base × 1.25) */
+  --cdx-r-sm: 7.5px;
+  --cdx-r-md: 10px;
+  --cdx-r-lg: 12.5px;
+  --cdx-r-xl: 15px;
+  --cdx-r-2xl: 20px;
+  --cdx-r-full: 9999px;
+
+  /* 字体 */
+  --cdx-font: "Inter", "Noto Sans SC", sans-serif;
+
+  /* 阴影 */
+  --cdx-shadow-md: 0 2px 4px -1px rgba(0, 0, 0, 0.08);
+  --cdx-shadow-xl: 0 8px 16px -4px rgba(0, 0, 0, 0.12);
+  --cdx-shadow-2xl: 0 16px 32px -8px rgba(0, 0, 0, 0.19);
+
+  font-family: var(--cdx-font);
+  color: var(--cdx-text);
+
+  /*
+   * 暗色主题 —— 复刻 Codex .electron-dark token 真值(灰阶 gray-900=#181818 / gray-800=#212121 / gray-0=#fff)。
+   * 用 @media (prefers-color-scheme: dark) 与全局 oc-2 主题切换机制对齐(ui theme/loader.ts 同样用此媒体查询,
+   * 由 Electron nativeTheme 驱动 prefers-color-scheme);仅在 .cdx 作用域内覆盖 token,不影响全局主题。
+   */
+  @media (prefers-color-scheme: dark) {
+    --cdx-text: #fff;
+    --cdx-text-2: color-mix(in oklab, #fff 70%, transparent);
+    --cdx-text-3: color-mix(in oklab, #fff 50%, transparent);
+    --cdx-bg: #181818;
+    --cdx-elevated: #212121;
+    --cdx-surface: color-mix(in oklab, #fff 3%, transparent);
+    --cdx-surface-hover: color-mix(in oklab, #fff 5%, transparent);
+    --cdx-border: color-mix(in oklab, #fff 8%, transparent);
+    --cdx-border-light: color-mix(in oklab, #fff 4%, transparent);
+    --cdx-border-heavy: color-mix(in oklab, #fff 16%, transparent);
+    /* 主按钮翻转:白底 + 深字(对照 Codex bg-token-foreground,dark 下 foreground=gray-0) */
+    --cdx-primary: #fff;
+    --cdx-on-primary: #0d0d0d;
+    --cdx-primary-hover: #ededed;
+    /* 危险态文字改用更亮的红(Codex red-400),保证暗底对比 */
+    --cdx-danger: #fa423e;
+  }
+}
+
+/* ---------- 页面骨架 ---------- */
+.cdx-page {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  background: var(--cdx-bg);
+}
+.cdx-page-inner {
+  max-width: 768px;
+  margin: 0 auto;
+  padding: 40px 24px 64px;
+  /* 填满内容区高度,使空状态可在剩余空间垂直居中(对照 Codex flex h-full) */
+  box-sizing: border-box;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.cdx-h1 {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--cdx-text);
+}
+.cdx-sub {
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--cdx-text-3);
+}
+.cdx-sub a {
+  color: var(--cdx-text-3);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.cdx-section-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cdx-text);
+}
+
+/* ---------- 按钮 ---------- */
+.cdx-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: none;
+  border-radius: var(--cdx-r-md);
+  font-family: var(--cdx-font);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.12s ease,
+    opacity 0.12s ease,
+    color 0.12s ease;
+  user-select: none;
+}
+.cdx-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.cdx-btn--primary {
+  background: var(--cdx-primary);
+  color: var(--cdx-on-primary);
+}
+.cdx-btn--primary:not(:disabled):hover {
+  background: var(--cdx-primary-hover);
+}
+.cdx-btn--secondary {
+  background: var(--cdx-surface);
+  color: var(--cdx-text);
+}
+.cdx-btn--secondary:not(:disabled):hover {
+  background: var(--cdx-surface-hover);
+}
+/* 空状态模板建议按钮:白底 + 描边(对照 Codex Button color="outline") */
+.cdx-btn--outline {
+  background: var(--cdx-bg);
+  color: var(--cdx-text);
+  border: 1px solid var(--cdx-border);
+}
+.cdx-btn--outline:not(:disabled):hover {
+  background: var(--cdx-surface);
+}
+/* 空状态大号时钟图标 */
+.cdx-empty__clock {
+  color: var(--cdx-text);
+  opacity: 0.92;
+}
+.cdx-btn--ghost {
+  background: transparent;
+  color: var(--cdx-text);
+}
+.cdx-btn--ghost:not(:disabled):hover {
+  background: var(--cdx-surface);
+}
+.cdx-btn--sm {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 13px;
+}
+.cdx-btn--danger {
+  background: #e02e2a;
+  color: #fff;
+}
+.cdx-btn--danger:not(:disabled):hover {
+  background: #c92520;
+}
+
+/* 确认弹窗 */
+.cdx-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cdx-confirm__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cdx-text);
+}
+.cdx-confirm__body {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--cdx-text-3);
+}
+.cdx-confirm__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* 图标按钮(关闭等) */
+.cdx-iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--cdx-r-md);
+  background: transparent;
+  color: var(--cdx-text-2);
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+.cdx-iconbtn:hover {
+  background: var(--cdx-surface);
+  color: var(--cdx-text);
+}
+
+/* ---------- 胶囊 / 下拉触发 ---------- */
+.cdx-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--cdx-border);
+  border-radius: var(--cdx-r-full);
+  background: transparent;
+  color: var(--cdx-text);
+  font-family: var(--cdx-font);
+  font-size: 14px;
+  font-weight: 400;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+.cdx-pill:hover {
+  background: var(--cdx-surface);
+}
+.cdx-pill:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.cdx-pill__lead {
+  color: var(--cdx-text-2);
+}
+.cdx-pill__chev {
+  color: var(--cdx-text-3);
+  margin-left: 1px;
+}
+.cdx-pill--primary {
+  background: var(--cdx-primary);
+  color: var(--cdx-on-primary);
+  border-color: transparent;
+}
+.cdx-pill--primary:hover {
+  background: var(--cdx-primary-hover);
+}
+.cdx-pill--bare {
+  border-color: transparent;
+  background: transparent;
+  padding: 4px 6px;
+  height: auto;
+}
+.cdx-pill--bare:hover {
+  background: var(--cdx-surface);
+}
+.cdx-pill--action {
+  color: var(--cdx-text);
+}
+.cdx-pill--action .cdx-pill__lead {
+  color: currentColor;
+}
+.cdx-pill--action:hover {
+  color: var(--cdx-text);
+}
+.cdx-pill--primary .cdx-pill__lead,
+.cdx-pill--primary .cdx-pill__chev {
+  color: color-mix(in oklab, #fff 80%, transparent);
+}
+
+/* 分体创建按钮:左主按钮直接创建 + 右 chevron 下拉切换方式(对照 Codex compound-button)。
+   两半各自带底色、各自独立 hover(对照 Codex Button primary:bg-token-foreground + hover:/80);
+   hover 把底色降到 80% 不透明度,透出浅色页面形成可见高亮 */
+.cdx-split {
+  display: inline-flex;
+  align-items: stretch;
+  height: 32px;
+  border-radius: var(--cdx-r-full);
+  color: var(--cdx-on-primary);
+  overflow: hidden;
+}
+.cdx-split__main {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px 0 14px;
+  background: var(--cdx-primary);
+  color: inherit;
+  font-family: var(--cdx-font);
+  font-size: 14px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+.cdx-split__chev {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 9px 0 4px;
+  background: var(--cdx-primary);
+  /* 跟随 on-primary(浅色=白底深字按钮上的半透白,暗色=白按钮上的半透深),避免暗色下白箭头白底看不见 */
+  color: color-mix(in oklab, var(--cdx-on-primary) 50%, transparent);
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+.cdx-split__main:hover,
+.cdx-split__chev:hover,
+.cdx-split__chev[data-expanded] {
+  background: color-mix(in oklab, var(--cdx-primary) 80%, transparent);
+}
+
+/* 胶囊内嵌的原生 select / time / number,去掉原生外观 */
+.cdx-bare {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--cdx-text);
+  font-family: var(--cdx-font);
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+  padding: 0;
+}
+.cdx-bare::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  width: 0;
+  display: none;
+}
+
+/* ---------- 快捷创建小胶囊(+ 每日简报)---------- */
+.cdx-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--cdx-r-full);
+  background: transparent;
+  color: var(--cdx-text-2);
+  font-family: var(--cdx-font);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+.cdx-chip:hover {
+  background: var(--cdx-surface);
+  color: var(--cdx-text);
+}
+
+/* ---------- 列表卡片 ---------- */
+.cdx-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--cdx-border);
+  border-radius: var(--cdx-r-lg);
+  background: var(--cdx-elevated);
+  transition: background-color 0.12s ease;
+}
+.cdx-card:hover {
+  background: var(--cdx-surface);
+}
+.cdx-card__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cdx-text);
+}
+.cdx-card__meta {
+  margin-top: 2px;
+  font-size: 14px;
+  color: var(--cdx-text-3);
+}
+
+/* ---------- 模板卡片 ---------- */
+.cdx-tpl {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--cdx-border);
+  border-radius: var(--cdx-r-lg);
+  background: var(--cdx-elevated);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+.cdx-tpl:hover {
+  background: var(--cdx-surface);
+}
+.cdx-tpl__emoji {
+  font-size: 22px;
+  line-height: 1;
+}
+.cdx-tpl__text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--cdx-text-2);
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ---------- 弹层 ---------- */
+.cdx-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  /* 必须高于共享 dialog 遮罩(dialog-overlay z-index:300),否则遮罩盖在面板上拦截全部点击 */
+  z-index: 301;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 48px);
+  background: var(--cdx-elevated);
+  border: 1px solid var(--cdx-border);
+  border-radius: var(--cdx-r-2xl);
+  box-shadow: var(--cdx-shadow-2xl);
+  overflow: hidden;
+}
+.cdx-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 20px 12px;
+}
+.cdx-modal__title {
+  flex: 1;
+  min-width: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--cdx-text);
+}
+.cdx-modal__body {
+  padding: 0 20px 20px;
+}
+.cdx-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 16px;
+}
+
+/* ---------- 输入 ---------- */
+.cdx-title-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-family: var(--cdx-font);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--cdx-text);
+  outline: none;
+}
+.cdx-title-input::placeholder {
+  color: var(--cdx-text-3);
+}
+.cdx-textarea {
+  width: 100%;
+  min-height: 232px;
+  resize: none;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: var(--cdx-font);
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--cdx-text);
+  outline: none;
+}
+.cdx-textarea::placeholder {
+  color: var(--cdx-text-3);
+}
+.cdx-field__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cdx-text-2);
+}
+.cdx-field__help {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--cdx-text-3);
+}
+
+/* ---------- 开关(已启用)---------- */
+.cdx-switch {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: var(--cdx-r-full);
+  background: var(--cdx-border-heavy);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.cdx-switch[data-on="true"] {
+  background: var(--cdx-primary);
+}
+.cdx-switch__knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease;
+}
+.cdx-switch[data-on="true"] .cdx-switch__knob {
+  transform: translateX(16px);
+}
+
+/* ---------- 工具条 ---------- */
+.cdx-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.cdx-project-picker {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-width: 0;
+}
+.cdx-project-picker__select {
+  max-width: 240px;
+}
+.cdx-project-picker .cdx-pill--action {
+  max-width: 180px;
+}
+.cdx-model-pill {
+  max-width: 260px;
+}
+.cdx-thread-picker__select {
+  max-width: 360px;
+  min-width: 0;
+}
+.cdx-pill .cdx-select__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- 列表分组 + 任务行(Codex 填充态)---------- */
+.cdx-list-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 2px;
+}
+.cdx-list-head__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cdx-text);
+}
+.cdx-list-head__rule {
+  flex: 1;
+  height: 1px;
+  background: var(--cdx-border);
+}
+.cdx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 4px -12px 0;
+}
+/* 任务行:圆角 hover 块、无分隔线、整行可点(对照 Codex selectable-list-row) */
+.cdx-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  padding: 12px;
+  border-radius: var(--cdx-r-lg);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+.cdx-row:hover {
+  background: var(--cdx-surface);
+}
+.cdx-row__icon {
+  display: flex;
+  min-height: 24px;
+  flex-shrink: 0;
+  align-items: center;
+  color: var(--cdx-text-3);
+}
+.cdx-row__status {
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+}
+.cdx-row__content {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+.cdx-row__line1 {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 12px;
+}
+.cdx-row__titlewrap {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: baseline;
+  gap: 8px;
+}
+.cdx-row__title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--cdx-text);
+}
+.cdx-row__project {
+  max-width: 12rem;
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  color: var(--cdx-text-3);
+}
+.cdx-row__right {
+  position: relative;
+  display: flex;
+  min-height: 24px;
+  min-width: 5rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: flex-end;
+}
+.cdx-row__nextrun {
+  font-size: 13px;
+  white-space: nowrap;
+  color: var(--cdx-text-3);
+  font-variant-numeric: tabular-nums;
+  transition: opacity 0.12s ease;
+}
+.cdx-row__actions {
+  position: absolute;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.cdx-row:hover .cdx-row__nextrun,
+.cdx-row:focus-within .cdx-row__nextrun {
+  opacity: 0;
+}
+.cdx-row:hover .cdx-row__actions,
+.cdx-row:focus-within .cdx-row__actions {
+  opacity: 1;
+}
+.cdx-iconbtn--sm {
+  width: 28px;
+  height: 28px;
+}
+
+/* ---------- 已有自动化下方的模板建议 ---------- */
+.cdx-suggestions {
+  padding-top: 4px;
+}
+.cdx-suggestion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 8px -12px 0;
+}
+.cdx-suggestion {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: var(--cdx-r-lg);
+  background: transparent;
+  color: var(--cdx-text);
+  font-family: var(--cdx-font);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+.cdx-suggestion:hover {
+  background: var(--cdx-surface);
+}
+.cdx-suggestion:focus-visible {
+  outline: 2px solid var(--cdx-focus);
+  outline-offset: -2px;
+}
+.cdx-suggestion__icon {
+  display: flex;
+  width: 20px;
+  height: 24px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+.cdx-suggestion__icon[data-tone="blue"] {
+  color: #339cff;
+}
+.cdx-suggestion__icon[data-tone="purple"] {
+  color: #8b5cf6;
+}
+.cdx-suggestion__icon[data-tone="green"] {
+  color: #16a34a;
+}
+.cdx-suggestion__content {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+.cdx-suggestion__line {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+.cdx-suggestion__title {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.cdx-suggestion__schedule {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--cdx-text-3);
+  font-variant-numeric: tabular-nums;
+}
+.cdx-suggestion__description {
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--cdx-text-3);
+}
+
+/* ⋯ 菜单(暂停/删除) */
+.cdx-menu {
+  min-width: 132px;
+  padding: 4px;
+  background: var(--cdx-elevated);
+  border: 1px solid var(--cdx-border);
+  border-radius: var(--cdx-r-md);
+  box-shadow: var(--cdx-shadow-xl);
+  /* DropdownMenu.Portal 渲染到 body;从编辑器弹层内打开时须高于共享遮罩(300)与面板(301) */
+  z-index: 310;
+}
+.cdx-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 8px;
+  border: none;
+  border-radius: var(--cdx-r-sm);
+  background: transparent;
+  color: var(--cdx-text);
+  font-family: var(--cdx-font);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.cdx-menu__item:hover {
+  background: var(--cdx-surface);
+}
+.cdx-menu__item--danger {
+  color: var(--cdx-danger);
+}
+.cdx-menu__item--danger:hover {
+  background: color-mix(in oklab, var(--cdx-danger) 8%, transparent);
+}
+
+/* ---------- 计划 Popover ---------- */
+.cdx-sched-pop {
+  width: 248px;
+  /* Popover portal 到 body;从编辑器弹层内打开时须高于共享遮罩(300)与面板(301) */
+  z-index: 310;
+}
+.cdx-sched {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cdx-sched__title {
+  padding: 0 2px 2px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cdx-text);
+}
+.cdx-sched__tz {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--cdx-text-3);
+}
+.cdx-sched__num,
+.cdx-sched__rrule {
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--cdx-border);
+  border-radius: var(--cdx-r-md);
+  background: var(--cdx-bg);
+  font-family: var(--cdx-font);
+  font-size: 13px;
+  color: var(--cdx-text);
+  outline: none;
+}
+.cdx-sched__num:focus,
+.cdx-sched__rrule:focus {
+  border-color: var(--cdx-border-heavy);
+}
+.cdx-sched__interval {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--cdx-text-2);
+}
+.cdx-sched__num {
+  width: 64px;
+  text-align: center;
+}
+.cdx-sched__rrule {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12px;
+}
+
+/* 就地下拉(模式/星期)—— 列表渲染在 popover 内,不触发外部点击关闭 */
+.cdx-isel {
+  position: relative;
+  width: 100%;
+}
+.cdx-isel__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--cdx-border);
+  border-radius: var(--cdx-r-md);
+  background: var(--cdx-bg);
+  font-family: var(--cdx-font);
+  font-size: 13px;
+  color: var(--cdx-text);
+  cursor: pointer;
+}
+.cdx-isel__trigger:hover {
+  border-color: var(--cdx-border-heavy);
+}
+.cdx-isel__chev {
+  color: var(--cdx-text-3);
+}
+.cdx-isel__list {
+  width: 100%;
+  max-height: 224px;
+  margin-top: 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+  background: var(--cdx-bg);
+  border: 1px solid var(--cdx-border);
+  border-radius: var(--cdx-r-md);
+}
+.cdx-isel__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: none;
+  border-radius: var(--cdx-r-sm);
+  background: transparent;
+  color: var(--cdx-text);
+  font-family: var(--cdx-font);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.cdx-isel__item:hover,
+.cdx-isel__item[data-sel="true"] {
+  background: var(--cdx-surface);
+}
+
+/* 时间选择器:原生 input(隐藏系统指示器)+ 时钟切换 + 小时/分钟两列面板 */
+.cdx-time {
+  position: relative;
+  width: 100%;
+}
+.cdx-time__panel {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  margin-top: 4px;
+  padding: 4px;
+  background: var(--cdx-bg);
+  border: 1px solid var(--cdx-border);
+  border-radius: var(--cdx-r-md);
+}
+.cdx-time__col {
+  flex: 1;
+  max-height: 224px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.cdx-time__row {
+  position: relative;
+  width: 100%;
+}
+.cdx-time__input {
+  width: 100%;
+  height: 32px;
+  padding: 0 34px 0 10px;
+  border: 1px solid var(--cdx-border);
+  border-radius: var(--cdx-r-md);
+  background: var(--cdx-bg);
+  font-family: var(--cdx-font);
+  font-size: 13px;
+  color: var(--cdx-text);
+  outline: none;
+}
+.cdx-time__input:focus {
+  border-color: var(--cdx-border-heavy);
+}
+.cdx-time__input::-webkit-calendar-picker-indicator {
+  display: none;
+}
+.cdx-time__toggle {
+  position: absolute;
+  top: 50%;
+  right: 5px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: var(--cdx-r-sm);
+  background: transparent;
+  color: var(--cdx-text-2);
+  cursor: pointer;
+}
+.cdx-time__toggle:hover,
+.cdx-time__toggle[data-open="true"] {
+  background: var(--cdx-surface);
+  color: var(--cdx-text);
+}
+.cdx-time__item {
+  display: block;
+  width: 100%;
+  height: 28px;
+  padding: 0 8px;
+  border: none;
+  border-radius: var(--cdx-r-sm);
+  background: transparent;
+  color: var(--cdx-text-2);
+  font-family: var(--cdx-font);
+  font-size: 13px;
+  line-height: 28px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.cdx-time__item:hover {
+  background: var(--cdx-surface);
+}
+.cdx-time__item[data-sel="true"] {
+  background: var(--cdx-surface);
+  color: var(--cdx-text);
+}
+
+/* ---------- 通用下拉 + 状态徽章 ---------- */
+.cdx-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 4px 6px;
+  border: none;
+  border-radius: var(--cdx-r-md);
+  background: transparent;
+  color: var(--cdx-text);
+  font-family: var(--cdx-font);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+.cdx-select:hover {
+  background: var(--cdx-surface);
+}
+.cdx-select__label {
+  min-width: 0;
+}
+.cdx-menu--select {
+  min-width: 160px;
+  max-width: min(360px, calc(100vw - 32px));
+  max-height: min(320px, calc(100vh - 96px));
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.cdx-menu--select .cdx-menu__item {
+  align-items: flex-start;
+  gap: 12px;
+}
+.cdx-menu__label {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.cdx-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: var(--cdx-r-full);
+  background: var(--cdx-surface);
+  font-size: 13px;
+  color: var(--cdx-text);
+}
+.cdx-badge--warn {
+  color: var(--cdx-danger, #e02e2a);
+}
+.cdx-badge__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.cdx-badge__dot[data-status="active"] {
+  background: #2bb673;
+}
+.cdx-badge__dot[data-status="paused"] {
+  background: #e2860b;
+}
+
+/* ---------- 详情页 ---------- */
+.cdx-detail {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  background: var(--cdx-bg);
+}
+.cdx-detail__main {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 32px 24px 48px;
+}
+.cdx-detail__main-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.cdx-detail__title-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-family: var(--cdx-font);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--cdx-text);
+  outline: none;
+}
+.cdx-detail__prompt {
+  width: 100%;
+  min-height: 320px;
+  resize: none;
+  border: none;
+  background: transparent;
+  font-family: var(--cdx-font);
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--cdx-text);
+  outline: none;
+}
+.cdx-detail__prompt::placeholder {
+  color: var(--cdx-text-3);
+}
+.cdx-detail__rail {
+  width: 360px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--cdx-border);
+  padding: 20px 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.cdx-sec {
+  padding: 16px 4px 6px;
+  font-size: 13px;
+  color: var(--cdx-text-3);
+}
+.cdx-sec:first-child {
+  padding-top: 4px;
+}
+.cdx-frow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 36px;
+  padding: 2px 4px;
+}
+.cdx-frow__label {
+  flex-shrink: 0;
+  font-size: 14px;
+  color: var(--cdx-text-2);
+}
+.cdx-frow__value {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+.cdx-frow__plain {
+  font-size: 14px;
+  color: var(--cdx-text);
+}
+
+/* 详情顶栏:面包屑 + 操作 */
+.cdx-detail__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  /* 顶栏落在 macOS 标题栏拖拽区内,空白处保留可拖拽窗口 */
+  -webkit-app-region: drag;
+}
+/* 顶栏内的交互元素(面包屑返回 / 暂停 / 删除 / 运行)需 no-drag,否则被拖拽区拦截无法点击 */
+.cdx-detail__top button {
+  -webkit-app-region: no-drag;
+}
+.cdx-crumb {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  font-size: 14px;
+  color: var(--cdx-text-3);
+}
+.cdx-crumb__link {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: var(--cdx-r-sm);
+  color: var(--cdx-text-3);
+  font-family: var(--cdx-font);
+  font-size: 14px;
+}
+.cdx-crumb__link:hover {
+  background: var(--cdx-surface);
+  color: var(--cdx-text);
+}
+.cdx-crumb__cur {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--cdx-text);
+  padding: 0 4px;
+}
+
+/* 历史运行 */
+.cdx-hist {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.cdx-hist__empty {
+  padding: 6px 4px;
+  font-size: 14px;
+  color: var(--cdx-text-3);
+}
+.cdx-hist__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 4px;
+  border-radius: var(--cdx-r-md);
+}
+.cdx-hist__row:hover {
+  background: var(--cdx-surface);
+}
+.cdx-hist__row--link {
+  cursor: pointer;
+}
+.cdx-hist__icon {
+  width: 20px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cdx-hist__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.cdx-hist__dot[data-s="running"] {
+  background: #d89614;
+  animation: cdx-pulse 1.2s ease-in-out infinite;
+}
+@keyframes cdx-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.cdx-hist__dot[data-s="success"] {
+  background: #2bb673;
+}
+.cdx-hist__dot[data-s="error"] {
+  background: #e02e2a;
+}
+.cdx-hist__title {
+  min-width: 0;
+  flex: 1;
+  font-size: 14px;
+  color: var(--cdx-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 历史区块标题行:左标题 + 右批量操作 */
+.cdx-sec--row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.cdx-sec__actions {
+  display: inline-flex;
+  gap: 8px;
+}
+.cdx-sec__act {
+  font-size: 11px;
+  color: var(--cdx-text-3);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.cdx-sec__act:hover {
+  color: var(--cdx-text);
+}
+/* 未读运行:加粗标题(行尾另有蓝点,见 detail.tsx) */
+.cdx-hist__row--unread .cdx-hist__headline {
+  font-weight: 600;
+}
+.cdx-hist__summary {
+  display: block;
+  font-size: 12px;
+  color: var(--cdx-text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 单条操作:默认隐藏,悬停行时出现(对照 Codex 的行内操作) */
+.cdx-hist__acts {
+  display: inline-flex;
+  gap: 6px;
+  opacity: 0;
+  flex-shrink: 0;
+}
+.cdx-hist__row:hover .cdx-hist__acts,
+.cdx-hist__acts:focus-within {
+  opacity: 1;
+}
+.cdx-hist__act {
+  font-size: 11px;
+  color: var(--cdx-text-3);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.cdx-hist__act:hover {
+  color: var(--cdx-text);
+}
+.cdx-hist__meta {
+  color: var(--cdx-text-3);
+}
+.cdx-hist__error {
+  margin-left: 6px;
+  color: var(--cdx-danger, #e02e2a);
+}
+.cdx-hist__time {
+  font-size: 13px;
+  color: var(--cdx-text-3);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 对话内联自动化卡片(对照 Codex)---------- */
+.cdx-inline-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: min(100%, 620px);
+  min-height: 68px;
+  margin-top: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--cdx-border);
+  border-radius: var(--cdx-r-md);
+  background: var(--cdx-elevated);
+  color: var(--cdx-text);
+  font-family: var(--cdx-font);
+  box-shadow: 0 1px 0 color-mix(in oklab, var(--cdx-text) 2%, transparent);
+}
+.cdx-inline-card:hover,
+.cdx-inline-card:focus-within {
+  background: var(--cdx-surface-hover);
+}
+.cdx-inline-card[data-deleted="true"] {
+  opacity: 0.72;
+}
+.cdx-inline-card[data-deleted="true"]:hover {
+  background: var(--cdx-elevated);
+}
+.cdx-inline-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  border: 1px solid var(--cdx-border);
+  border-radius: var(--cdx-r-md);
+  background: var(--cdx-surface);
+  color: var(--cdx-text-2);
+}
+.cdx-inline-card__body {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+.cdx-inline-card__title {
+  color: var(--cdx-text);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.cdx-inline-card__schedule {
+  color: var(--cdx-text-3);
+  font-size: 14px;
+  line-height: 1.25;
+}
+.cdx-inline-card__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  flex: 0 0 auto;
+  padding: 0 14px;
+  border: 1px solid var(--cdx-border);
+  border-radius: var(--cdx-r-md);
+  background: var(--cdx-surface);
+  color: var(--cdx-text);
+  font-family: var(--cdx-font);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease,
+    opacity 0.12s ease;
+}
+.cdx-inline-card__action:hover {
+  background: var(--cdx-surface-hover);
+}
+.cdx-inline-card__action:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+@media (max-width: 520px) {
+  .cdx-inline-card {
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
+  }
+  .cdx-inline-card__icon {
+    width: 34px;
+    height: 34px;
+  }
+  .cdx-inline-card__action {
+    height: 32px;
+    padding: 0 12px;
+  }
+}
+
+/* ---------- 会话侧边栏:自动化详情面板(对照 Codex)---------- */
+.cdx-autopanel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--cdx-bg);
+  color: var(--cdx-text);
+  font-family: var(--cdx-font);
+}
+.cdx-autopanel__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: 44px;
+  padding: 0 8px 0 14px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--cdx-border-light);
+}
+.cdx-autopanel__top-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--cdx-text-2);
+}
+.cdx-autopanel__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+}
+.cdx-autopanel__h1 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.cdx-autopanel__prompt {
+  font-size: 13px;
+  color: var(--cdx-text-2);
+  line-height: 1.5;
+  margin-bottom: 18px;
+  white-space: pre-wrap;
+}
+.cdx-autopanel__empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cdx-text-3);
+}
+.cdx-autopanel__footer {
+  flex-shrink: 0;
+  padding: 12px 16px;
+  border-top: 1px solid var(--cdx-border-light);
+}
+.cdx-autopanel__view {
+  width: 100%;
+  justify-content: center;
+}

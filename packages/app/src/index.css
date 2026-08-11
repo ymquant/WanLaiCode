@@ -1,0 +1,2381 @@
+@import "@opencode-ai/ui/styles/tailwind";
+
+@font-face {
+  font-family: "JetBrainsMono Nerd Font Mono";
+  src: url("/assets/JetBrainsMonoNerdFontMono-Regular.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+}
+
+:root {
+  --windows-statusbar-bg: var(--background-base);
+  --windows-statusbar-symbol: var(--text-strong);
+  --windows-statusbar-icon: var(--icon-base);
+  --windows-statusbar-icon-disabled: var(--icon-weak-base);
+  --windows-statusbar-border: var(--border-weak-base);
+  --windows-statusbar-row-hover: var(--surface-base-hover);
+  --windows-statusbar-row-active: var(--surface-base);
+  /* Codex：full_access 警告橙（浅色 / 暗色） */
+  --permission-full-access: rgb(226, 85, 7);
+}
+
+:root[data-color-scheme="dark"] {
+  --permission-full-access: rgb(255, 133, 73);
+}
+
+/* 编辑框引用按 Codex 的结构化节点渲染：网页链接可打开/编辑，文件引用直接打开本地文件。 */
+.prompt-input-link-reference,
+.prompt-input-file-reference {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  user-select: text;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+
+.prompt-input-link-reference {
+  color: var(--text-interactive-base);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--text-interactive-base) 72%, transparent);
+  text-underline-offset: 2px;
+}
+
+.prompt-input-file-reference {
+  color: var(--text-interactive-base);
+  text-decoration: none;
+}
+
+.prompt-input-link-icon,
+.prompt-input-file-icon {
+  width: 1em;
+  height: 1em;
+  flex: 0 0 auto;
+  vertical-align: -0.16em;
+}
+
+/* 文件无法打开时只覆盖错误语义色，并沿用普通轻阴影，避免圆角处叠出深红色块。 */
+.file-open-error-toast {
+  --toast-background: var(--surface-critical-base);
+  --toast-border: var(--border-critical-base);
+  --toast-icon-color: var(--icon-critical-base);
+  --toast-title-color: var(--text-strong);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xs);
+
+  [data-slot="toast-close-button"] {
+    --icon-base: var(--icon-critical-base);
+  }
+}
+
+:root[data-theme="wanlai-theme"][data-color-scheme="light"] {
+  --composer-bg: var(--background-base);
+  --composer-border: #1a1c1f14;
+  --composer-shadow: 0 1px 2px rgba(26, 28, 31, 0.04), 0 10px 30px rgba(26, 28, 31, 0.06);
+  --composer-control-hover: #1a1c1f0a;
+  --composer-control-active: #1a1c1f12;
+}
+
+/* Codex electron 半透明 token：仅 Windows wanlai-theme（对齐 .electron-light，不改 macOS / Linux / Web） */
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-color-scheme="light"] {
+  --codex-gray-0: #ffffff;
+  --codex-gray-50: #f9f9f9;
+  --codex-gray-100: #ededed;
+  --codex-gray-750: #282828;
+  --codex-gray-800: #212121;
+  --codex-gray-900: #181818;
+  --codex-surface: var(--codex-gray-0);
+  --codex-surface-under: var(--codex-gray-50);
+  --codex-elevated-primary: #ffffffd1;
+  --codex-elevated-primary-opaque: var(--codex-gray-0);
+  --codex-elevated-secondary: color-mix(in srgb, var(--text-strong, #1a1c1f) 2%, transparent);
+  --codex-elevated-secondary-opaque: #ededed66;
+  --codex-editor-opaque: #ededed66;
+  /* 侧栏：与深色相同，不叠中性灰 tint，直接透出系统亮色 Mica 的偏亮蓝 */
+  --desktop-glass-tint: transparent;
+  --desktop-glass-elevated: var(--codex-elevated-primary);
+  --background-weak: var(--codex-surface-under);
+  --background-stronger: var(--codex-surface);
+  --windows-statusbar-bg: var(--codex-surface-under);
+  --windows-statusbar-symbol: #1a1c1f;
+  --windows-statusbar-icon: #8e8f90;
+  --windows-statusbar-icon-disabled: #c7c7c7;
+  --windows-statusbar-row-hover: var(--codex-elevated-secondary);
+  --windows-statusbar-row-active: var(--codex-elevated-secondary);
+  --windows-statusbar-border: color-mix(in srgb, var(--text-strong, #1a1c1f) 8%, transparent);
+}
+
+@supports (color: color-mix(in oklab, red, red)) {
+  :root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-color-scheme="light"] {
+    /* account-popover 等浮层：略提高不透明度（原 70% 过透） */
+    --codex-elevated-primary: color-mix(in oklab, var(--codex-gray-0) 86%, transparent);
+    --codex-elevated-secondary: color-mix(in oklab, var(--text-strong, #1a1c1f) 2%, transparent);
+    --codex-editor-opaque: color-mix(in oklab, var(--codex-gray-100) 40%, transparent);
+    --codex-elevated-secondary-opaque: color-mix(in oklab, var(--codex-gray-100) 40%, transparent);
+    --desktop-glass-elevated: var(--codex-elevated-primary);
+    --windows-statusbar-border: color-mix(in oklab, var(--text-strong, #1a1c1f) 8%, transparent);
+  }
+}
+
+:root[data-theme="wanlai-theme"][data-color-scheme="dark"] {
+  --composer-bg: var(--background-strong);
+  --composer-border: #ffffff1f;
+  --composer-shadow: 0 1px 2px rgba(0, 0, 0, 0.22), 0 14px 36px rgba(0, 0, 0, 0.28);
+  --composer-control-hover: #ffffff12;
+  --composer-control-active: #ffffff1a;
+}
+
+/*
+ * Codex 默认 chrome 深色（resolveThemes w() + contrast=60）：
+ * surface #181818 / under #141414 / editor-opaque #282828 / elevated-primary rgba(54,54,54,.96)
+ *
+ * 毛玻璃侧栏：同壁纸下 Codex 侧栏 RGB≈裸 Mica（如 #1a1f2e）；
+ * 再叠任何中性灰 tint（含 CSS 里的 editor 70%）都会偏到 #24262a 一带。
+ * 深色 chrome 层保持 transparent，直接透出系统 Mica，RGB 与 Codex 一致。
+ * 浮层仍用 elevated-primary。
+ */
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-color-scheme="dark"] {
+  --codex-gray-0: #ffffff;
+  --codex-gray-750: #282828;
+  --codex-gray-800: #212121;
+  --codex-gray-900: #181818;
+  --codex-surface: #181818;
+  --codex-surface-under: #141414;
+  --codex-editor-opaque: #282828;
+  --codex-elevated-primary: rgba(54, 54, 54, 0.96);
+  --codex-elevated-primary-opaque: #363636;
+  --codex-elevated-secondary: rgba(255, 255, 255, 0.032);
+  --codex-elevated-secondary-opaque: #282828;
+  --desktop-glass-tint: transparent;
+  --desktop-glass-elevated: var(--codex-elevated-primary);
+  --windows-statusbar-bg: var(--codex-surface-under);
+  --windows-statusbar-symbol: #ffffff;
+  --windows-statusbar-icon: rgba(255, 255, 255, 0.904);
+  --windows-statusbar-icon-disabled: rgba(255, 255, 255, 0.51);
+  --windows-statusbar-border: rgba(255, 255, 255, 0.084);
+  --windows-statusbar-row-hover: var(--codex-elevated-secondary);
+  --windows-statusbar-row-active: var(--codex-elevated-secondary);
+  --background-base: var(--codex-surface);
+  --background-weak: var(--codex-surface-under);
+  --background-strong: var(--codex-editor-opaque);
+  --background-stronger: var(--codex-surface);
+  --surface-raised-base: var(--codex-elevated-primary);
+  --surface-base: var(--codex-elevated-secondary);
+  --border-base: rgba(255, 255, 255, 0.084);
+  --border-weak-base: rgba(255, 255, 255, 0.042);
+  --text-base: rgba(255, 255, 255, 0.71);
+  --text-weak: rgba(255, 255, 255, 0.51);
+  --icon-base: rgba(255, 255, 255, 0.904);
+  --icon-weak-base: rgba(255, 255, 255, 0.71);
+  --icon-strong-base: rgba(255, 255, 255, 0.904);
+  --border-hover: rgba(255, 255, 255, 0.157);
+  --border-active: rgba(255, 255, 255, 0.157);
+  --border-strong-base: rgba(255, 255, 255, 0.157);
+  --surface-raised-base-hover: var(--codex-elevated-primary-opaque);
+  --surface-base-hover: rgba(255, 255, 255, 0.08);
+  --input-base: var(--codex-editor-opaque);
+  --input-hover: var(--codex-elevated-primary-opaque);
+}
+
+@layer components {
+  [data-component="pptx-preview-renderer"] {
+    color: initial;
+  }
+
+  [data-component="pptx-preview-renderer"] > div {
+    margin-inline: auto;
+  }
+
+  [data-component="pptx-preview-renderer"] * {
+    box-sizing: border-box;
+  }
+
+  [data-component="docx-reader"] {
+    min-height: 100%;
+    background: #f7f7f7 !important;
+  }
+
+  [data-component="docx-reader"] .docx-wrapper {
+    min-height: 100%;
+    padding: 16px;
+    padding-bottom: 0;
+    background: #f7f7f7 !important;
+    align-items: center !important;
+    transform-origin: top left;
+  }
+
+  [data-component="docx-reader"] section.docx {
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
+  }
+
+  [data-component="spreadsheet-preview-grid"] {
+    color: initial;
+  }
+
+  [data-component="spreadsheet-preview-grid"] table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 13px;
+  }
+
+  [data-component="spreadsheet-preview-grid"] td,
+  [data-component="spreadsheet-preview-grid"] th {
+    border: 1px solid #d0d1d3;
+    padding: 2px 6px;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    max-width: 400px;
+    vertical-align: top;
+  }
+
+  [data-component="spreadsheet-preview-grid"] tr:first-child td,
+  [data-component="spreadsheet-preview-grid"] tr:first-child th {
+    background: #f3f4f6;
+    font-weight: 600;
+    color: #5f6368;
+  }
+
+  @keyframes thread-running-spin {
+    from {
+      transform: translateZ(0) rotate(0deg);
+    }
+
+    to {
+      transform: translateZ(0) rotate(360deg);
+    }
+  }
+
+  .thread-running-spinner {
+    width: 14px;
+    height: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: light-dark(rgb(84, 84, 84), rgb(220, 220, 220));
+    animation: thread-running-spin 1100ms linear infinite;
+    transform-origin: 50% 50%;
+    backface-visibility: hidden;
+    will-change: transform;
+  }
+
+  .thread-running-spinner [data-slot="progress-circle-background"] {
+    stroke: color-mix(in srgb, currentColor 18%, transparent);
+  }
+
+  .thread-running-spinner [data-slot="progress-circle-progress"] {
+    stroke: currentColor;
+    transition: none;
+  }
+
+  [data-component="getting-started"] {
+    container-type: inline-size;
+    container-name: getting-started;
+  }
+
+  [data-component="getting-started-actions"] {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem; /* gap-3 */
+  }
+
+  [data-component="getting-started-actions"] > [data-component="button"] {
+    width: 100%;
+  }
+
+  @container getting-started (min-width: 17rem) {
+    [data-component="getting-started-actions"] {
+      flex-direction: row;
+      align-items: center;
+    }
+
+    [data-component="getting-started-actions"] > [data-component="button"] {
+      width: auto;
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Codex-style session page (scoped) */
+  [data-ui="codex-chat"] [data-session-title] {
+    /* Override Tailwind utility background on the sticky header */
+    background: linear-gradient(to bottom, var(--background-base) 48px, transparent) !important;
+  }
+
+  /* Minimap 占用左侧 16px 定位 + 48px 轨道；按 session panel 的真实宽度保留 64px 空间，
+     不能使用包含项目侧栏的 viewport 断点，否则 1260px Retina 窗口会在内容区足够时仍被误隐藏。 */
+  [data-ui="codex-chat"] [data-component="conversation-minimap"] {
+    display: none;
+  }
+
+  @container (min-width: 928px) {
+    [data-ui="codex-chat"] [data-component="conversation-minimap"] {
+      display: block;
+    }
+  }
+
+  /* 详情卡宽屏模式会把 800px 正文列左移 148px；1100-1223px 区间没有足够左侧余量，
+     此时继续隐藏 Minimap，避免轨道覆盖消息内容；达到 1224px 后上方通用规则自然恢复显示。 */
+  @container (min-width: 1100px) and (max-width: 1223px) {
+    [data-ui="codex-chat"] [data-card-open="true"] [data-component="conversation-minimap"] {
+      display: none;
+    }
+  }
+
+  /* 消息列与对话框（composer）共用同一套布局，避免折叠 sidebar / 右栏卡片打开时左右边界错位。
+     box max-width 恒定为 800px（content-box 视角下内容区 776px），不再根据视窗在 800 / 1000 之间跳。 */
+  [data-ui="codex-chat"] [data-slot="session-turn-list"],
+  [data-ui="codex-chat"] [data-slot="session-composer-column"] {
+    width: 100%;
+    max-width: 800px;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 12px;
+    padding-right: 12px;
+    /* 与 SessionDetailsCard 浮层一致的过渡曲线；CSS 仅声明，
+       是否平移由 `data-card-open="true"` + 容器宽度的查询规则决定。 */
+    transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+  }
+
+  [data-ui="codex-chat"] [data-slot="session-turn-list"] {
+    /* Keep content clear of the bottom composer dock */
+    padding-bottom: 120px !important;
+  }
+
+  /* 默认走 base 规则的 margin-left/right: auto，让对话整列在容器中线居中；
+     不再继承 PR #51 的「整列右移 60px」偏移——浮层关闭时用户期望就是真正居中。 */
+
+  /* 浮层打开 + 容器≥1100px（=800 对话 + 272 浮层 + 24 右距 + 4 触发余量）时，
+     对话整列左移 148px（=296/2），让对话在「容器 − 296px 浮层带」剩余空间中央。
+     位移量推导：基线 margin-left=(100%−800)/2，目标 margin-left=(100%−1096)/2，差值固定 −148px。
+     阈值取 1100 是为了让常见的「1440 视窗 + 280 sidebar = 1160 session-panel」也能命中动画；
+     再窄就让浮层覆盖在对话上方（满足窄屏「无空间并列」场景）。 */
+  @container (min-width: 1100px) {
+    [data-ui="codex-chat"] [data-card-open="true"] [data-slot="session-turn-list"],
+    [data-ui="codex-chat"] [data-card-open="true"] [data-slot="session-composer-column"] {
+      transform: translateX(-148px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-ui="codex-chat"] [data-slot="session-turn-list"],
+    [data-ui="codex-chat"] [data-slot="session-composer-column"] {
+      transition: none;
+    }
+  }
+
+  /* SessionDetailsCard 浮层双模式：定位 + 动画跟着 data-mode 走，
+     [data-state="open|closed"] 控制可见性，宽屏 slide-in / 窄屏仿 codex-chat-menu 下拉（scale + opacity）。
+     位置硬编码到 CSS 是为了避开 Tailwind v4 `translate-x-*` 用 `translate` 属性（而非 transform）的差异——
+     这里全部走 `transform: translate/scale`，单一来源、不会出现「transition-property 跟实际属性对不上」的 bug。 */
+
+  /* ---- 共享基线 ---- */
+  [data-ui="codex-chat"] [data-component="session-details-overlay"] {
+    will-change: transform, opacity;
+    /* 会话标题区分隔线（chrome 带底边）在 48px；卡片顶与其间距 10px */
+    top: calc(48px + 10px);
+  }
+  [data-ui="codex-chat"] [data-component="session-details-overlay"][data-git-layout="git"] {
+    width: 300px;
+    height: 288px;
+  }
+  [data-ui="codex-chat"] [data-component="session-details-overlay"][data-git-layout="output"] {
+    width: 300px;
+    height: auto;
+  }
+  [data-ui="codex-chat"]
+    [data-component="session-details-overlay"][data-git-layout="output"][data-output-expanded="true"] {
+    height: auto;
+    max-height: 495px;
+  }
+  [data-ui="codex-chat"]
+    [data-component="session-details-overlay"][data-git-layout="output"]
+    [data-component="session-details-card"] {
+    height: auto;
+  }
+  [data-ui="codex-chat"]
+    [data-component="session-details-overlay"][data-git-layout="output"][data-output-expanded="true"]
+    [data-component="session-details-card"] {
+    height: auto;
+    max-height: 495px;
+  }
+  [data-ui="codex-chat"]
+    [data-component="session-details-overlay"][data-git-layout="git"]
+    [data-slot="session-details-card-main"] {
+    overflow-y: auto;
+    min-height: 0;
+    flex: 1 1 0;
+  }
+  [data-ui="codex-chat"]
+    [data-component="session-details-overlay"][data-git-layout="git"]
+    [data-slot="session-details-card-scroll"] {
+    height: 100%;
+    overflow: hidden;
+  }
+  [data-ui="codex-chat"]
+    [data-component="session-details-overlay"][data-git-layout="output"]
+    [data-slot="session-details-card-scroll"] {
+    height: auto;
+    min-height: 0;
+    flex: 0 0 auto;
+  }
+  [data-ui="codex-chat"]
+    [data-component="session-details-overlay"][data-git-layout="output"]:not([data-output-expanded="true"])
+    [data-slot="session-details-card-scroll"] {
+    overflow: hidden;
+  }
+  [data-ui="codex-chat"]
+    [data-component="session-details-overlay"][data-git-layout="output"][data-output-expanded="true"]
+    [data-slot="session-details-card-scroll"] {
+    overflow-y: auto;
+    margin-block: 15px;
+    height: auto;
+  }
+  [data-ui="codex-chat"]
+    [data-component="session-details-overlay"][data-git-layout="output"]
+    [data-slot="session-details-card-main"] {
+    overflow: visible;
+  }
+  [data-ui="codex-chat"] [data-component="session-details-overlay"][data-git-layout="output"] [data-section="output"] {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+    box-sizing: border-box;
+  }
+  [data-ui="codex-chat"]
+    [data-component="session-details-overlay"][data-git-layout="output"]
+    [data-section="output"][data-section-open="false"] {
+    flex: 0 0 auto;
+  }
+  [data-ui="codex-chat"]
+    [data-component="session-details-overlay"][data-git-layout="output"][data-output-expanded="true"]
+    [data-section="output"] {
+    height: auto;
+    min-height: 0;
+  }
+  [data-ui="codex-chat"]
+    [data-component="session-details-overlay"][data-git-layout="output"]
+    [data-section="sources"][data-section-open="true"] {
+    min-height: 80px;
+    box-sizing: border-box;
+  }
+  [data-ui="codex-chat"]
+    [data-component="session-details-overlay"][data-git-layout="output"]
+    [data-section="sources"][data-section-open="false"] {
+    height: auto;
+    flex: 0 0 auto;
+  }
+  [data-ui="codex-chat"]
+    [data-component="session-details-overlay"][data-git-layout="output"]
+    [data-slot="output-header"] {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    flex-shrink: 0;
+    background-color: var(--background-base);
+  }
+  [data-ui="codex-chat"]
+    [data-component="session-details-overlay"][data-git-layout="output"]
+    [data-slot="output-list"] {
+    height: 180px;
+    flex-shrink: 0;
+  }
+  [data-ui="codex-chat"]
+    [data-component="session-details-overlay"][data-git-layout="output"]
+    [data-section="output"][data-expanded="true"]
+    [data-slot="output-list"] {
+    height: auto;
+  }
+  [data-ui="codex-chat"]
+    [data-component="session-details-overlay"][data-git-layout="output"]
+    [data-slot="output-footer"] {
+    height: 35px;
+    flex-shrink: 0;
+    box-sizing: border-box;
+  }
+  [data-ui="codex-chat"] [data-component="session-details-overlay"][data-git-layout="output"] [data-slot="output-row"],
+  [data-ui="codex-chat"]
+    [data-component="session-details-overlay"][data-git-layout="output"]
+    [data-slot="output-action"] {
+    height: 30px;
+    flex-shrink: 0;
+    box-sizing: border-box;
+  }
+  [data-ui="codex-chat"] [data-component="session-details-overlay"][data-state="closed"] {
+    pointer-events: none;
+  }
+
+  /* 挂载安定前禁用过渡：目录切换整树重建时，初始宽窄估算被校正不应表现为一次可见的滑出动画 */
+  [data-ui="codex-chat"] [data-component="session-details-overlay"][data-settled="false"] {
+    transition: none !important;
+  }
+
+  /* ---- 宽模式（floating 卡片，slide-in 从右进/出） ---- */
+  [data-ui="codex-chat"] [data-component="session-details-overlay"][data-mode="wide"] {
+    right: 1.5rem; /* right-6 */
+    transition:
+      transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  [data-ui="codex-chat"] [data-component="session-details-overlay"][data-mode="wide"][data-state="open"] {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  [data-ui="codex-chat"] [data-component="session-details-overlay"][data-mode="wide"][data-state="closed"] {
+    transform: translateX(calc(100% + 1.5rem));
+    opacity: 0;
+  }
+
+  /* ---- 窄模式（dropdown，锚定按钮、scale + opacity 浮现） ---- */
+  /* right 跟 chrome row 同步：side panel 开=right-2（chrome inset 状态），关=right-11（chrome outset 状态）。 */
+  [data-ui="codex-chat"] [data-component="session-details-overlay"][data-mode="narrow"] {
+    right: 2.75rem; /* right-11，跟 chrome outset 对齐 */
+    transform-origin: top right;
+    transition:
+      transform 150ms ease-out,
+      opacity 150ms ease-out;
+  }
+  [data-ui="codex-chat"] [data-component="session-details-overlay"][data-mode="narrow"][data-anchor="inset"] {
+    right: 0.5rem; /* right-2，跟 chrome inset 对齐（side panel 开时） */
+  }
+  [data-ui="codex-chat"] [data-component="session-details-overlay"][data-mode="narrow"][data-state="open"] {
+    transform: scale(1);
+    opacity: 1;
+  }
+  [data-ui="codex-chat"] [data-component="session-details-overlay"][data-mode="narrow"][data-state="closed"] {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-ui="codex-chat"] [data-component="session-details-overlay"] {
+      transition: none;
+    }
+  }
+
+  /* Codex-like markdown code blocks (scoped) — same fill as Shell */
+  [data-ui="codex-chat"] [data-component="markdown"] [data-component="markdown-code"] {
+    background: var(--markdown-code-background);
+    border: 1px solid var(--border-weaker-base);
+    box-shadow: none;
+  }
+
+  [data-ui="codex-chat"] [data-component="markdown"] {
+    .shiki {
+      border-radius: 0;
+      border: 0;
+      background: transparent;
+      padding: 14px;
+    }
+
+    pre {
+      margin-bottom: 20px;
+    }
+
+    /* Inline backticks: neutral pill (not syntax-string teal) */
+    :not(pre) > code {
+      color: var(--text-strong);
+      background: var(--surface-base-hover);
+      border-radius: 4px;
+      padding: 2px 5px;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+
+    /* File path links: keep blue underline link; strip pill from nested <code> */
+    a.markdown-file-link > code {
+      color: inherit;
+      background: transparent;
+      padding: 0;
+      border-radius: 0;
+      box-decoration-break: unset;
+      -webkit-box-decoration-break: unset;
+    }
+  }
+
+  /* Codex-like context gathering summary (scoped) */
+  [data-ui="codex-chat"] [data-component="context-tool-group-trigger"] {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
+  /* Make "已探索" label match the same gray as "已编辑" */
+  [data-ui="codex-chat"] [data-component="context-tool-group-trigger"] [data-slot="context-tool-group-title"] {
+    color: var(--text-weak) !important;
+    font-weight: var(--font-weight-regular) !important;
+  }
+
+  /* Make status label same gray as summary */
+  [data-ui="codex-chat"] [data-component="tool-status-title"] {
+    color: var(--text-weak) !important;
+    font-weight: var(--font-weight-regular) !important;
+  }
+
+  /* Ensure shimmer never peaks to strong in status labels */
+  [data-ui="codex-chat"] [data-component="tool-status-title"] [data-component="text-shimmer"] {
+    --text-shimmer-base-color: var(--text-weak);
+    --text-shimmer-peak-color: var(--text-weak);
+  }
+
+  [data-ui="codex-chat"] [data-component="context-tool-group-trigger"] [data-component="text-shimmer"] {
+    --text-shimmer-base-color: var(--text-weak);
+    --text-shimmer-peak-color: var(--text-weak);
+  }
+
+  /* TextShimmer renders its own colored layers; force both layers to the same gray */
+  [data-ui="codex-chat"]
+    [data-component="tool-status-title"]
+    [data-component="text-shimmer"]
+    [data-slot="text-shimmer-char-base"],
+  [data-ui="codex-chat"]
+    [data-component="tool-status-title"]
+    [data-component="text-shimmer"]
+    [data-slot="text-shimmer-char-shimmer"] {
+    color: var(--text-weak) !important;
+    -webkit-text-fill-color: var(--text-weak) !important;
+    background-image: none !important;
+  }
+
+  /* Make edit/write trigger titles same gray as summary */
+  [data-ui="codex-chat"] [data-component="edit-trigger"] [data-slot="message-part-title-text"],
+  [data-ui="codex-chat"] [data-component="write-trigger"] [data-slot="message-part-title-text"] {
+    color: var(--text-weak) !important;
+    font-weight: var(--font-weight-regular) !important;
+  }
+
+  /* Codex: context detail lines are lighter */
+  [data-ui="codex-chat"] [data-component="context-tool-group-list"] [data-slot="basic-tool-tool-title"] {
+    color: var(--text-weak) !important;
+    font-weight: var(--font-weight-regular);
+  }
+
+  /* Codex: activity (commands/edits) groups */
+  [data-ui="codex-chat"] [data-component="activity-tool-group-trigger"] {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
+  [data-ui="codex-chat"] [data-component="activity-tool-group-list"] {
+    padding-left: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  [data-ui="codex-chat"] [data-slot="activity-tool-item-text"] {
+    color: var(--text-weak);
+    font-weight: var(--font-weight-regular);
+  }
+
+  [data-ui="codex-chat"] [data-slot="activity-tool-item-row"] {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+    color: var(--text-weak);
+    font-weight: var(--font-weight-regular);
+  }
+
+  [data-ui="codex-chat"] [data-slot="activity-tool-item-command"] {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-weak);
+  }
+
+  [data-ui="codex-chat"] [data-slot="activity-tool-item-prefix"] {
+    color: var(--text-weak);
+    flex: 0 0 auto;
+  }
+
+  [data-ui="codex-chat"] [data-slot="activity-tool-item-desc"] {
+    color: var(--text-weak);
+    opacity: 0.85;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  [data-ui="codex-chat"] [data-slot="activity-tool-group-command"] {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  [data-ui="codex-chat"] [data-slot="activity-tool-item-file"] {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    color: var(--text-interactive-base);
+    font-weight: var(--font-weight-regular);
+  }
+
+  [data-ui="codex-chat"] [data-slot="activity-tool-item-diff"] {
+    display: inline-flex;
+    align-items: baseline;
+  }
+
+  [data-ui="codex-chat"] [data-component="activity-edit-preview"] {
+    margin-top: 8px;
+  }
+
+  [data-ui="codex-chat"] [data-slot="activity-tool-item-file"]:hover {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  [data-ui="codex-chat"] [data-slot="activity-tool-item-dir"] {
+    color: var(--text-weak);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  [data-ui="codex-chat"] [data-slot="activity-tool-item-spacer"] {
+    flex: 1 1 auto;
+    min-width: 12px;
+  }
+
+  [data-ui="codex-chat"] [data-slot="activity-tool-item-status"] {
+    flex: 0 0 auto;
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-large);
+    color: var(--text-weak);
+  }
+
+  [data-ui="codex-chat"] [data-component="bash-output"][data-variant="codex-activity"] {
+    margin-top: 8px;
+    border-radius: 12px;
+    border: 1px solid var(--border-weaker-base);
+    background: var(--markdown-code-background);
+    box-shadow: none;
+  }
+
+  [data-ui="codex-chat"] [data-component="bash-output"][data-variant="codex-activity"] [data-slot="bash-status"] {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px 12px 10px;
+    color: var(--text-weak);
+    font-size: var(--font-size-small);
+  }
+}
+
+[data-section="git"] {
+  font-size: var(--font-size-small);
+}
+
+[data-section="git"] .env-row-trigger,
+.env-controls-menu {
+  font-size: var(--font-size-small);
+}
+
+[data-section="git"] [data-component="icon"].env-row-end-icon,
+.env-controls-menu [data-component="icon"].env-row-end-icon {
+  flex-shrink: 0;
+  width: calc(var(--font-size-small) * 1.3) !important;
+  height: calc(var(--font-size-small) * 1.3) !important;
+  min-width: calc(var(--font-size-small) * 1.3) !important;
+  min-height: calc(var(--font-size-small) * 1.3) !important;
+  line-height: 1;
+}
+
+/* codex-dialog 布局兜底（不区分主题）：内容 min-h:0，容器跟随内容高度 */
+.codex-dialog {
+  min-height: 0 !important;
+}
+[data-component="dialog"]:has(.codex-dialog) [data-slot="dialog-container"] {
+  height: auto !important;
+}
+
+.skill-detail-switch [data-slot="switch-control"] {
+  width: 38px !important;
+  height: 24px !important;
+  padding: 2px !important;
+}
+
+.skill-detail-switch [data-slot="switch-thumb"] {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.skill-detail-switch[data-checked] [data-slot="switch-thumb"] {
+  transform: translateX(14px) !important;
+}
+
+/* operation-dialog 标题加粗 */
+.operation-dialog [data-slot="dialog-title"] {
+  font-weight: 700 !important;
+}
+
+/* rename-project-dialog 标题加粗 */
+.rename-project-dialog [data-slot="dialog-title"] {
+  font-weight: 700 !important;
+}
+
+/* create-file-dialog 标题加粗 */
+.create-file-dialog [data-slot="dialog-title"] {
+  font-weight: 700 !important;
+}
+
+/* 左下角账号 popover：Codex 风格半透明玻璃浮层 */
+.account-popover {
+  overflow: hidden;
+  border-radius: 18px !important;
+  background: color-mix(in srgb, var(--background-base) 48%, transparent) !important;
+  border: 1px solid color-mix(in srgb, white 44%, transparent) !important;
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.68) !important;
+  backdrop-filter: blur(34px) saturate(1.9) brightness(1.06);
+  -webkit-backdrop-filter: blur(34px) saturate(1.9) brightness(1.06);
+}
+
+:root[data-color-scheme="light"] .account-popover {
+  background: rgba(255, 255, 255, 0.46) !important;
+  border-color: rgba(255, 255, 255, 0.78) !important;
+  box-shadow:
+    0 18px 52px rgba(0, 0, 0, 0.16),
+    0 0 0 1px rgba(0, 0, 0, 0.035),
+    inset 0 1px 0 rgba(255, 255, 255, 0.88) !important;
+}
+
+:root[data-color-scheme="dark"] .account-popover {
+  background: rgba(22, 22, 22, 0.52) !important;
+  border-color: rgba(255, 255, 255, 0.13) !important;
+  box-shadow:
+    0 22px 60px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+/* wanlai-theme + Windows：浮层用 Codex elevated-primary（不改 macOS / Linux / Web） */
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"] .account-popover {
+  background: var(--desktop-glass-elevated, var(--codex-elevated-primary)) !important;
+  border-color: color-mix(in srgb, var(--codex-gray-0) 44%, transparent) !important;
+  backdrop-filter: blur(28px) saturate(1.75);
+  -webkit-backdrop-filter: blur(28px) saturate(1.75);
+}
+
+:root[data-theme="wanlai-theme"][data-color-scheme="light"][data-desktop-os="windows"] .account-popover {
+  border-color: color-mix(in srgb, var(--codex-gray-0) 78%, transparent) !important;
+}
+
+:root[data-theme="wanlai-theme"][data-color-scheme="dark"][data-desktop-os="windows"] .account-popover {
+  border-color: rgba(255, 255, 255, 0.084) !important;
+}
+
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"] .account-popover-item:focus-visible,
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"] .account-popover-subitem:focus-visible,
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"] .account-popover-item:hover,
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"] .account-popover-subitem:hover {
+  background: var(--codex-elevated-secondary) !important;
+}
+
+.account-popover [data-slot="popover-body"] {
+  padding: 8px;
+}
+
+.account-popover-account-row {
+  color: var(--text-base);
+}
+
+.account-popover-avatar {
+  background: rgba(255, 255, 255, 0.42);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
+:root[data-color-scheme="dark"] .account-popover-avatar {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.account-popover-divider {
+  margin: 6px 4px;
+  border-color: color-mix(in srgb, var(--border-base) 32%, transparent);
+}
+
+.account-popover-item,
+.account-popover-subitem {
+  outline: none;
+  transition:
+    background-color 0.14s ease,
+    color 0.14s ease;
+}
+
+.account-popover-item:focus-visible,
+.account-popover-subitem:focus-visible {
+  background: rgba(255, 255, 255, 0.46);
+}
+
+:root[data-color-scheme="dark"] .account-popover-item:focus-visible,
+:root[data-color-scheme="dark"] .account-popover-subitem:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Codex 侧栏玻璃层：容器负责半透明背景，文字和图标保持主题前景色，不参与滤镜混合 */
+[data-component="app-shell-left-panel"] {
+  position: relative;
+  /* Codex 侧栏文字层级：主文字是 foreground 85%，描述/时间是 50%，图标是 icon primary 90% */
+  --sidebar-codex-foreground: #1a1c1fd9;
+  --sidebar-codex-icon: #1a1c1f;
+  --text-base: var(--sidebar-codex-foreground);
+  --text-strong: var(--sidebar-codex-foreground);
+  --icon-base: var(--sidebar-codex-icon);
+  --icon-strong-base: var(--sidebar-codex-icon);
+  background: color-mix(in srgb, var(--background-base) 55%, transparent);
+  overflow: visible;
+}
+
+:root[data-color-scheme="dark"] [data-component="app-shell-left-panel"] {
+  --sidebar-codex-foreground: #ffffffd9;
+  --sidebar-codex-icon: #ffffffe6;
+}
+
+/* Codex 深色半透明：侧栏字色 secondary 71% / icon primary 90.4% */
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-color-scheme="dark"]
+  [data-component="app-shell-left-panel"],
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-color-scheme="dark"] .settings-route-sidebar {
+  --sidebar-codex-foreground: rgba(255, 255, 255, 0.71);
+  --sidebar-codex-icon: rgba(255, 255, 255, 0.904);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  [data-component="app-shell-left-panel"] {
+    background: color-mix(in srgb, var(--background-base) 55%, transparent);
+  }
+}
+
+/* wanlai-theme + Windows：侧栏只涂一层 Codex glass tint（不改 macOS / Linux / Web） */
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"]
+  [data-component="app-shell-left-panel"] {
+  background: var(--desktop-glass-tint, var(--codex-editor-opaque)) !important;
+}
+
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"] .settings-route-sidebar {
+  background: var(--desktop-glass-tint, var(--codex-editor-opaque)) !important;
+}
+
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"] .account-popover-avatar {
+  background: var(--codex-elevated-secondary) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--codex-gray-0, #fff) 8%, transparent);
+}
+
+[data-component="app-shell-left-panel"]::after {
+  position: absolute;
+  inset: 0 -16px 0 auto;
+  width: 16px;
+  pointer-events: none;
+  content: "";
+  background: inherit;
+}
+
+/* 侧边栏菜单行：对齐 Codex，只用轻量前景色覆盖表达 hover/active，避免滤镜压暗文字 */
+.codex-sidebar-thread-row,
+.glass-sidebar-menu-row {
+  overflow: hidden;
+}
+
+.codex-sidebar-thread-row {
+  border-radius: 10px;
+}
+
+.codex-sidebar-thread-idle:hover,
+.glass-sidebar-menu-row-idle:hover {
+  background: var(--button-secondary-hover);
+}
+
+.codex-sidebar-thread-active,
+.glass-sidebar-menu-row-active {
+  background: var(--button-secondary-base);
+  box-shadow: none;
+}
+
+.codex-sidebar-thread-active .codex-sidebar-thread-title {
+  color: var(--text-strong);
+}
+
+.codex-sidebar-thread-preview {
+  border-radius: 16px;
+}
+
+.codex-sidebar-thread-preview [data-slot="hover-card-body"] {
+  padding: 16px;
+}
+
+/* 全屏设置页左栏：对齐 Codex，只保留半透明底色，毛玻璃交给 Electron 原生窗口处理 */
+[data-component="settings-route-root"],
+[data-component="users-route-root"] {
+  --settings-sidebar-glass-bg: rgba(255, 255, 255, 0.38);
+}
+
+:root[data-color-scheme="dark"] [data-component="settings-route-root"],
+:root[data-color-scheme="dark"] [data-component="users-route-root"] {
+  --settings-sidebar-glass-bg: rgba(18, 18, 18, 0.38);
+}
+
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"] [data-component="settings-route-root"],
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"] [data-component="users-route-root"] {
+  --settings-sidebar-glass-bg: var(--desktop-glass-tint, var(--codex-editor-opaque));
+}
+
+.settings-route-sidebar {
+  --sidebar-codex-foreground: #1a1c1fd9;
+  --sidebar-codex-icon: #1a1c1f;
+  --settings-sidebar-edge-bg: var(--background-base);
+  --text-base: var(--sidebar-codex-foreground);
+  --text-strong: var(--sidebar-codex-foreground);
+  --icon-base: var(--sidebar-codex-icon);
+  --icon-strong-base: var(--sidebar-codex-icon);
+  background: color-mix(in srgb, var(--background-base) 55%, transparent);
+  box-shadow: none;
+}
+
+:root[data-color-scheme="dark"] .settings-route-sidebar {
+  --sidebar-codex-foreground: #ffffffd9;
+  --sidebar-codex-icon: #ffffffe6;
+  --settings-sidebar-edge-bg: var(--background-base);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .settings-route-sidebar {
+    background: color-mix(in srgb, var(--background-base) 55%, transparent);
+  }
+}
+
+/* macOS 透明设置页：主面圆角切口由 main-bg-fill 的左侧玻璃底承接，这里不再画侧栏扩展。 */
+.settings-route-sidebar::after {
+  position: absolute;
+  inset: 0;
+  width: 0;
+  pointer-events: none;
+  content: "";
+  background: transparent;
+}
+
+[data-component="settings-route-root"] [data-slot="main-bg-fill"],
+[data-component="users-route-root"] [data-slot="main-bg-fill"] {
+  background: linear-gradient(to right, var(--settings-sidebar-glass-bg) 0 12px, var(--background-base) 12px);
+}
+
+/* macOS 透明设置页：主面保持 Codex 圆角；接缝由侧栏窄边和 main-bg-fill 兜底，不再牺牲左侧圆角。 */
+[data-component="settings-route-root"] .settings-route-main,
+[data-component="users-route-root"] .settings-route-main {
+  background: var(--background-base) !important;
+  border-left-width: 0 !important;
+  box-shadow: none !important;
+}
+
+/* macOS 透明设置页：各设置内容页自带 bg-background-base，这里统一跟随主面，避免局部覆盖出竖向色带 */
+[data-component="settings-route-root"] .settings-scrollbar,
+[data-component="users-route-root"] .settings-scrollbar {
+  background: var(--background-base) !important;
+}
+
+.windows-settings-route {
+  top: 36px !important;
+  background-color: var(--windows-statusbar-bg) !important;
+}
+
+:root:has(div[data-component="windows-titlebar"]) [data-component="windows-titlebar"],
+:root:has(div[data-component="windows-titlebar"]) [data-component="app-shell-left-panel"],
+:root:has(div[data-component="windows-titlebar"]) nav[data-component="sidebar-nav-desktop"] > div > div {
+  background: var(--windows-statusbar-bg) !important;
+  background-color: var(--windows-statusbar-bg) !important;
+}
+
+/* Windows only: mobile drawer overlays main content — solid bg so text stays readable */
+:root[data-desktop-os="windows"]:has(div[data-component="windows-titlebar"]) nav[data-component="sidebar-nav-mobile"],
+:root[data-desktop-os="windows"]:has(div[data-component="windows-titlebar"])
+  nav[data-component="sidebar-nav-mobile"]
+  [data-component="app-shell-left-panel"],
+:root[data-desktop-os="windows"]:has(div[data-component="windows-titlebar"])
+  nav[data-component="sidebar-nav-mobile"]
+  > div {
+  background: var(--background-base) !important;
+  background-color: var(--background-base) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root:has(div[data-component="windows-titlebar"]) [data-component="app-shell-left-panel"]::after {
+  background: var(--windows-statusbar-bg) !important;
+}
+
+.windows-settings-route .settings-route-sidebar {
+  padding-top: 16px !important;
+  background: var(--windows-statusbar-bg) !important;
+  background-color: var(--windows-statusbar-bg) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  -webkit-app-region: drag;
+}
+
+.windows-settings-route .settings-route-sidebar::after {
+  background: var(--windows-statusbar-bg) !important;
+}
+
+/* wanlai-theme + Windows Mica：取消实色覆盖；侧栏只涂一层 glass tint（勿再给 nav 子层上色） */
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"]:has(
+    div[data-component="windows-titlebar"]
+  )
+  [data-component="windows-titlebar"],
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"]:has(
+    div[data-component="windows-titlebar"]
+  )
+  [data-component="app-shell-left-panel"],
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"]:has(
+    div[data-component="windows-titlebar"]
+  )
+  nav[data-component="sidebar-nav-desktop"]
+  > div
+  > div {
+  background: var(--desktop-glass-tint) !important;
+  background-color: var(--desktop-glass-tint) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"]:has(
+    div[data-component="windows-titlebar"]
+  )
+  nav[data-component="sidebar-nav-desktop"]
+  > div {
+  background: transparent !important;
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"]:has(
+    div[data-component="windows-titlebar"]
+  )
+  nav[data-component="sidebar-nav-mobile"],
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"]:has(
+    div[data-component="windows-titlebar"]
+  )
+  nav[data-component="sidebar-nav-mobile"]
+  [data-component="app-shell-left-panel"],
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"]:has(
+    div[data-component="windows-titlebar"]
+  )
+  nav[data-component="sidebar-nav-mobile"]
+  > div {
+  background: var(--background-base) !important;
+  background-color: var(--background-base) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"]:has(
+    div[data-component="windows-titlebar"]
+  )
+  [data-component="app-shell-left-panel"]::after {
+  background: inherit !important;
+}
+
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"] .windows-settings-route {
+  background-color: transparent !important;
+}
+
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"]
+  .windows-settings-route
+  .settings-route-sidebar {
+  background: var(--desktop-glass-tint) !important;
+  background-color: var(--desktop-glass-tint) !important;
+}
+
+/* Codex main-surface = surface；圆角外侧透出 Mica，不再铺 surface-under */
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"] [data-slot="main-bg-fill"] {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"]
+  [data-slot="main-bg-fill"]
+  > main {
+  background-color: var(--codex-surface, var(--background-base)) !important;
+}
+
+.windows-settings-route .settings-route-sidebar button,
+.windows-settings-route [data-component="resize-handle"] {
+  -webkit-app-region: no-drag;
+}
+
+.windows-settings-route main {
+  background-color: var(--background-base) !important;
+  border: 1px solid var(--windows-statusbar-border);
+}
+
+.windows-settings-route .glass-sidebar-menu-row-idle,
+.windows-settings-route .glass-sidebar-menu-row-active,
+:root:has(div[data-component="windows-titlebar"]) .codex-sidebar-thread-idle,
+:root:has(div[data-component="windows-titlebar"]) .codex-sidebar-thread-active,
+:root:has(div[data-component="windows-titlebar"]) .glass-sidebar-menu-row-idle,
+:root:has(div[data-component="windows-titlebar"]) .glass-sidebar-menu-row-active {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.windows-settings-route .glass-sidebar-menu-row-active {
+  background: var(--windows-statusbar-row-active) !important;
+  box-shadow: none !important;
+}
+
+.windows-settings-route .glass-sidebar-menu-row-idle:hover {
+  background: var(--windows-statusbar-row-hover) !important;
+}
+
+:root:has(div[data-component="windows-titlebar"]) .codex-sidebar-thread-active,
+:root:has(div[data-component="windows-titlebar"]) .glass-sidebar-menu-row-active {
+  background: var(--windows-statusbar-row-active) !important;
+  box-shadow: none !important;
+}
+
+:root:has(div[data-component="windows-titlebar"]) .codex-sidebar-thread-idle:hover,
+:root:has(div[data-component="windows-titlebar"]) .glass-sidebar-menu-row-idle:hover {
+  background: var(--windows-statusbar-row-hover) !important;
+}
+
+:root:has(div[data-component="windows-titlebar"]) [data-dock-surface="shell"][data-variant="codex"] {
+  border: 1px solid color-mix(in srgb, var(--border-weak-base) 55%, var(--border-base));
+}
+
+@media (prefers-color-scheme: light) {
+  /* 通用 Codex 风弹窗：底色 252,252,252 + 启用 25,28,31 / 禁用 140,141,142 */
+  .codex-dialog {
+    background-color: rgb(252, 252, 252) !important;
+    --text-base: rgb(25, 28, 31);
+    --text-strong: rgb(25, 28, 31);
+    --text-strongest: rgb(25, 28, 31);
+    --text-stronger: rgb(25, 28, 31);
+    --text-weak: rgb(140, 141, 142);
+    --text-weaker: rgb(140, 141, 142);
+    --text-weakest: rgb(140, 141, 142);
+    --icon-base: rgb(25, 28, 31);
+    --icon-strong: rgb(25, 28, 31);
+    --icon-weak: rgb(140, 141, 142);
+  }
+
+  .codex-dialog [data-disabled],
+  .codex-dialog [aria-disabled="true"],
+  .codex-dialog button:disabled,
+  .codex-dialog input:disabled,
+  .codex-dialog [data-state="disabled"] {
+    color: rgb(140, 141, 142);
+  }
+
+  /* 设置弹窗：启用 25,28,31 / 禁用 140,141,142 */
+  /* 左下角账号 popover：启用 25,28,31 / 弱化 140,141,142（与 Codex 截图一致的深灰黑） */
+}
+
+/* codex-dialog 布局兜底（不区分主题）：内容 min-h:0，容器跟随内容高度 */
+.codex-dialog {
+  min-height: 0 !important;
+}
+[data-component="dialog"]:has(.codex-dialog) [data-slot="dialog-container"] {
+  height: auto !important;
+}
+
+/* /status 复用标题栏状态内容，但使用匹配信息密度的紧凑弹窗宽度 */
+[data-component="dialog"]:has(.dialog-status) [data-slot="dialog-container"] {
+  width: min(calc(100vw - 32px), 400px) !important;
+}
+
+/* 完全访问权限确认框：让最大壳子和内容使用同一宽度，由 fixed dialog 根节点统一居中 */
+[data-component="dialog"]:has(.dialog-permission-full-access) [data-slot="dialog-container"] {
+  width: min(calc(100vw - 32px), 440px) !important;
+}
+
+/* 侧栏搜索弹窗：固定 520×490（需放在 codex-dialog 兜底之后以免被 height:auto 覆盖） */
+[data-component="dialog"]:has(.sidebar-search-dialog) [data-slot="dialog-container"] {
+  width: min(calc(100vw - 16px), 520px) !important;
+  height: min(490px, calc(100vh - 32px)) !important;
+}
+[data-component="dialog"]:has(.sidebar-search-dialog) [data-slot="dialog-content"] {
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+[data-component="dialog"]:has(.sidebar-search-dialog) [data-slot="dialog-body"] {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* 浅色模式下统一文字色（启用 / 禁用） */
+@media (prefers-color-scheme: light) {
+  /* 通用 Codex 风弹窗：底色 252,252,252 + 启用 25,28,31 / 禁用 140,141,142 */
+  .codex-dialog {
+    background-color: rgb(252, 252, 252) !important;
+    --text-base: rgb(25, 28, 31);
+    --text-strong: rgb(25, 28, 31);
+    --text-strongest: rgb(25, 28, 31);
+    --text-stronger: rgb(25, 28, 31);
+    --text-weak: rgb(140, 141, 142);
+    --text-weaker: rgb(140, 141, 142);
+    --text-weakest: rgb(140, 141, 142);
+    --icon-base: rgb(25, 28, 31);
+    --icon-strong: rgb(25, 28, 31);
+    --icon-weak: rgb(140, 141, 142);
+  }
+
+  .codex-dialog [data-disabled],
+  .codex-dialog [aria-disabled="true"],
+  .codex-dialog button:disabled,
+  .codex-dialog input:disabled,
+  .codex-dialog [data-state="disabled"] {
+    color: rgb(140, 141, 142);
+  }
+
+  /* 设置弹窗：启用 25,28,31 / 禁用 140,141,142 */
+  /* 左下角账号 popover：启用 25,28,31 / 弱化 140,141,142（与 Codex 截图一致的深灰黑） */
+}
+
+/* 1:1 复刻 Codex：仅 codex 区的菜单用灰色 hover；shared dropdown-menu.css 保留默认蓝色 hover。
+   Kobalte Portal 把 menu content 渲染到 document.body，外层 [data-ui="codex-chat"] scope 选不到，
+   所以 codex 区每个 <DropdownMenu.Content class="codex-chat-menu ..."> 显式加 class。 */
+.codex-chat-menu [data-slot="dropdown-menu-item"][data-highlighted],
+.codex-chat-menu [data-slot="dropdown-menu-checkbox-item"][data-highlighted],
+.codex-chat-menu [data-slot="dropdown-menu-radio-item"][data-highlighted],
+.codex-chat-menu [data-slot="dropdown-menu-sub-trigger"][data-highlighted] {
+  background-color: light-dark(rgb(244, 244, 244), rgba(255, 255, 255, 0.06));
+  color: var(--text-strong);
+}
+
+.codex-chat-menu [data-slot="context-menu-item"][data-highlighted],
+.codex-chat-menu [data-slot="context-menu-item"]:hover,
+.codex-chat-menu [data-slot="context-menu-sub-trigger"][data-highlighted],
+.codex-chat-menu [data-slot="context-menu-sub-trigger"]:hover,
+.codex-chat-menu [data-slot="context-menu-sub-trigger"][data-expanded] {
+  background-color: light-dark(rgb(244, 244, 244), rgba(255, 255, 255, 0.06));
+  color: var(--text-strong);
+}
+
+/* Codex：full_access 警告橙（token 见文件顶部 :root）
+   触发条：只染文字 + .permission-full-access-icon（及其 svg）；禁止写成「所有 icon-svg」，否则会染到 chevron。
+   菜单项：整行（标题 / 描述 / 图标 / 勾选）统一着色。 */
+.codex-chat-menu [data-permission-item="full_access"],
+.codex-chat-menu [data-permission-item="full_access"][data-highlighted],
+.codex-chat-menu [data-permission-item="full_access"] [data-slot="dropdown-menu-item-description"],
+.codex-chat-menu [data-permission-item="full_access"] [data-component="icon"],
+.codex-chat-menu [data-permission-item="full_access"] [data-slot="icon-svg"],
+[data-action="prompt-permission"][data-permission-mode="full_access"],
+[data-action="prompt-permission"][data-permission-mode="full_access"] .permission-full-access-icon,
+[data-action="prompt-permission"][data-permission-mode="full_access"] .permission-full-access-icon [data-slot="icon-svg"] {
+  color: var(--permission-full-access);
+}
+
+/* Codex 风对话框：commit / push 容器统一收窄到 480 */
+[data-component="dialog"]:has(.codex-dialog-narrow) [data-slot="dialog-container"] {
+  width: min(calc(100vw - 16px), 480px) !important;
+}
+/* X 关闭按钮浮到 dialog 右上角（脱离 header 默认 padding 流），并去掉灰底圆框只留 icon */
+[data-component="dialog"]:has(.codex-dialog-narrow) [data-slot="dialog-content"] {
+  position: relative;
+}
+[data-component="dialog"]:has(.codex-dialog-narrow) [data-slot="dialog-close-button"] {
+  position: absolute !important;
+  top: 14px;
+  right: 14px;
+  z-index: 1;
+  width: 24px !important;
+  height: 24px !important;
+  padding: 0 !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+[data-component="dialog"]:has(.codex-dialog-narrow) [data-slot="dialog-close-button"]:hover:not(:disabled) {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+[data-component="dialog"]:has(.codex-dialog-narrow) [data-slot="dialog-close-button"] [data-slot="icon-svg"] {
+  width: 16px;
+  height: 16px;
+}
+
+/* 编辑目标弹窗：objective 过长时限制 textarea 自增高度并内部滚动，避免弹窗撑满整个窗口 */
+.dialog-goal-edit-field textarea[data-slot="input-input"] {
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.prompt-input-scrollbar {
+  scrollbar-color: rgba(26, 28, 31, 0.28) transparent;
+  scrollbar-width: thin;
+}
+
+.prompt-input-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.prompt-input-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.prompt-input-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(26, 28, 31, 0.28);
+  border-radius: 999px;
+}
+
+[data-component="prompt-new-session-topbar"] {
+  --prompt-new-session-topbar-bg: color-mix(in srgb, var(--text-strong, #1a1c1f) 4.5%, transparent);
+}
+
+[data-component="prompt-new-session-topbar"] > div {
+  background: var(--prompt-new-session-topbar-bg);
+  min-height: 54px;
+}
+
+[data-component="prompt-new-session-topbar"] [data-action="prompt-new-session-project"],
+[data-component="prompt-new-session-topbar"] [data-action="prompt-execution-mode"],
+[data-component="prompt-new-session-topbar"] [data-action="prompt-branch-picker"] {
+  height: 28px !important;
+  max-width: min(220px, 34%) !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: var(--text-strong) !important;
+  font-size: 13px !important;
+  line-height: 18px !important;
+  padding-left: 6px !important;
+  padding-right: 6px !important;
+}
+
+[data-component="prompt-new-session-topbar"] [data-action="prompt-branch-picker"] {
+  max-width: min(220px, 34%) !important;
+}
+
+[data-component="prompt-new-session-topbar"] [data-action="prompt-new-session-project"]:hover,
+[data-component="prompt-new-session-topbar"] [data-action="prompt-execution-mode"]:hover,
+[data-component="prompt-new-session-topbar"] [data-action="prompt-branch-picker"]:hover {
+  background: color-mix(in srgb, var(--text-strong, #1a1c1f) 5%, transparent) !important;
+}
+
+[data-component="prompt-new-session-topbar"] [data-slot="icon-svg"] {
+  color: var(--icon-base);
+}
+
+@media (max-width: 640px) {
+  [data-component="prompt-new-session-topbar"] {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  [data-component="prompt-new-session-topbar"] > div {
+    gap: 4px;
+    min-height: 50px;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  [data-component="prompt-new-session-topbar"] [data-action="prompt-new-session-project"],
+  [data-component="prompt-new-session-topbar"] [data-action="prompt-execution-mode"],
+  [data-component="prompt-new-session-topbar"] [data-action="prompt-branch-picker"] {
+    max-width: none !important;
+    flex: 1 1 0 !important;
+    font-size: 12px !important;
+  }
+}
+
+/* commit 对话框「包含取消暂存的更改」Switch：椭圆 + 选中蓝色（对齐 Codex 视觉） */
+.commit-stage-switch [data-slot="switch-control"] {
+  width: 36px !important;
+  height: 20px !important;
+  border-radius: 999px !important;
+  border-color: transparent !important;
+  background-color: rgb(218, 220, 224) !important;
+  padding: 2px !important;
+}
+.commit-stage-switch [data-slot="switch-thumb"] {
+  width: 14px !important;
+  height: 14px !important;
+  border: none !important;
+  border-radius: 999px !important;
+  transform: translateX(0) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18) !important;
+}
+.commit-stage-switch[data-checked] [data-slot="switch-control"] {
+  background-color: rgb(45, 124, 246) !important;
+  border-color: transparent !important;
+}
+.commit-stage-switch[data-checked] [data-slot="switch-thumb"] {
+  transform: translateX(16px) !important;
+  background-color: rgb(255, 255, 255) !important;
+}
+
+/* —— 从某条消息派生对话弹窗（Codex 复刻） —— */
+
+/* 1. 缩窄 dialog 整体宽度 + 放松 dialog-content 默认 min-height 限制（默认 280px 会撑高短卡片） */
+[data-component="dialog"]:has([data-component="dialog-fork-from-message"]) [data-slot="dialog-container"] {
+  width: min(calc(100vw - 32px), 460px);
+  height: auto;
+}
+[data-component="dialog"]:has([data-component="dialog-fork-from-message"]) [data-slot="dialog-content"] {
+  min-height: 0;
+  padding: 24px;
+}
+
+[data-component="dialog-fork-from-message"] {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* 顶部 icon 角标：浅灰圆角方块 */
+[data-component="dialog-fork-from-message"] [data-slot="dialog-fork-header-icon"] {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background-color: light-dark(rgb(245, 245, 244), rgba(255, 255, 255, 0.06));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-strong);
+  margin-bottom: 18px;
+}
+[data-component="dialog-fork-from-message"] [data-slot="dialog-fork-header-icon"] [data-component="icon"] {
+  width: 20px;
+  height: 20px;
+}
+
+[data-component="dialog-fork-from-message"] [data-slot="dialog-fork-title"] {
+  font-size: 20px;
+  line-height: 1.35;
+  font-weight: var(--font-weight-strong, 600);
+  color: var(--text-strong);
+  margin: 0 0 10px;
+  letter-spacing: -0.01em;
+}
+
+[data-component="dialog-fork-from-message"] [data-slot="dialog-fork-description"] {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-weak);
+  margin: 0 0 18px;
+}
+
+[data-component="dialog-fork-from-message"] [data-slot="dialog-fork-options"] {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+/* 选项卡：近白浅灰底，无 border；hover/focus 加深 */
+[data-component="dialog-fork-from-message"] [data-slot="dialog-fork-option"] {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 16px;
+  text-align: left;
+  border-radius: 14px;
+  background-color: light-dark(rgb(245, 245, 244), rgba(255, 255, 255, 0.04));
+  border: none;
+  outline: none;
+  transition: background-color 0.12s ease;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+[data-component="dialog-fork-from-message"] [data-slot="dialog-fork-option"]:hover:not(:disabled) {
+  background-color: light-dark(rgb(238, 238, 236), rgba(255, 255, 255, 0.08));
+}
+[data-component="dialog-fork-from-message"] [data-slot="dialog-fork-option"]:focus-visible {
+  background-color: light-dark(rgb(238, 238, 236), rgba(255, 255, 255, 0.08));
+}
+
+/* 次级选项（派生到新工作树）：默认透明、与 dialog 背景一致；hover 时才出现浅灰底 */
+[data-component="dialog-fork-from-message"] [data-slot="dialog-fork-option"][data-secondary] {
+  background-color: transparent;
+}
+[data-component="dialog-fork-from-message"] [data-slot="dialog-fork-option"][data-secondary]:hover:not(:disabled) {
+  background-color: light-dark(rgb(245, 245, 244), rgba(255, 255, 255, 0.06));
+}
+[data-component="dialog-fork-from-message"] [data-slot="dialog-fork-option"][data-secondary]:focus-visible {
+  background-color: light-dark(rgb(245, 245, 244), rgba(255, 255, 255, 0.06));
+}
+[data-component="dialog-fork-from-message"] [data-slot="dialog-fork-option"]:disabled,
+[data-component="dialog-fork-from-message"] [data-slot="dialog-fork-option"][data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+[data-component="dialog-fork-from-message"] [data-slot="dialog-fork-option-icon"] {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-strong);
+}
+[data-component="dialog-fork-from-message"] [data-slot="dialog-fork-option-icon"] [data-component="icon"] {
+  width: 20px;
+  height: 20px;
+}
+
+[data-component="dialog-fork-from-message"] [data-slot="dialog-fork-option-body"] {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+[data-component="dialog-fork-from-message"] [data-slot="dialog-fork-option-title"] {
+  color: var(--text-strong);
+  font-weight: var(--font-weight-medium);
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+[data-component="dialog-fork-from-message"] [data-slot="dialog-fork-option-desc"] {
+  color: var(--text-weak);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* 底部取消按钮：full-width pill */
+[data-component="dialog-fork-from-message"] [data-slot="dialog-fork-cancel"] {
+  width: 100%;
+  height: 44px;
+  margin-top: 4px;
+  border: none;
+  outline: none;
+  border-radius: 999px;
+  background-color: light-dark(rgb(245, 245, 244), rgba(255, 255, 255, 0.06));
+  color: var(--text-strong);
+  font: inherit;
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+[data-component="dialog-fork-from-message"] [data-slot="dialog-fork-cancel"]:hover:not(:disabled) {
+  background-color: light-dark(rgb(238, 238, 236), rgba(255, 255, 255, 0.1));
+}
+[data-component="dialog-fork-from-message"] [data-slot="dialog-fork-cancel"]:focus-visible {
+  background-color: light-dark(rgb(238, 238, 236), rgba(255, 255, 255, 0.1));
+}
+[data-component="dialog-fork-from-message"] [data-slot="dialog-fork-cancel"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 创建 PR 弹窗：固定 420×600（覆盖 codex-dialog-narrow 默认尺寸） */
+[data-component="dialog"]:has(.dialog-create-pull-request) [data-slot="dialog-container"] {
+  width: min(calc(100vw - 16px), 420px) !important;
+  height: min(600px, calc(100vh - 32px)) !important;
+}
+[data-component="dialog"]:has(.dialog-create-pull-request) [data-slot="dialog-content"] {
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  border-radius: 12px !important;
+}
+[data-component="dialog"]:has(.dialog-create-pull-request) [data-slot="dialog-header"] {
+  flex-shrink: 0 !important;
+}
+[data-component="dialog"]:has(.dialog-create-pull-request) [data-slot="dialog-body"] {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+.dialog-create-pull-request-body.codex-dialog-narrow {
+  min-height: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+.dialog-create-pull-request-scroll {
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0 24px;
+  box-sizing: border-box;
+}
+.dialog-create-pull-request-title-field [data-slot="input-wrapper"] {
+  height: 40px;
+  align-items: center;
+  box-sizing: border-box;
+}
+.dialog-create-pull-request-title-field [data-slot="input-input"] {
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+}
+.dialog-create-pull-request-body-field [data-slot="input-wrapper"] {
+  height: 90px;
+  align-items: stretch;
+  box-sizing: border-box;
+}
+.dialog-create-pull-request-body-field textarea[data-slot="input-input"] {
+  height: 90px !important;
+  min-height: 90px !important;
+  max-height: 90px !important;
+  box-sizing: border-box;
+  resize: none;
+  overflow-y: auto;
+}
+.dialog-create-pull-request-footer {
+  flex-shrink: 0;
+  padding: 0 24px 20px;
+  box-sizing: border-box;
+}
+.dialog-create-pull-request-draft {
+  height: 25px;
+}
+.dialog-create-pull-request-draft-switch {
+  display: inline-flex;
+  align-items: center;
+}
+.dialog-create-pull-request-draft-switch [data-slot="switch-control"] {
+  width: 27px !important;
+  height: 15px !important;
+  border-radius: 999px !important;
+  border-color: transparent !important;
+  background-color: rgb(218, 220, 224) !important;
+  padding: 1.5px !important;
+}
+.dialog-create-pull-request-draft-switch [data-slot="switch-thumb"] {
+  width: 12px !important;
+  height: 12px !important;
+  border: none !important;
+  border-radius: 999px !important;
+  transform: translateX(0) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18) !important;
+}
+.dialog-create-pull-request-draft-switch[data-checked] [data-slot="switch-control"] {
+  background-color: rgb(45, 124, 246) !important;
+  border-color: transparent !important;
+}
+.dialog-create-pull-request-draft-switch[data-checked] [data-slot="switch-thumb"] {
+  transform: translateX(12px) !important;
+  background-color: rgb(255, 255, 255) !important;
+}
+.dialog-create-pull-request-open-page {
+  height: 25px;
+  min-height: 25px;
+  max-height: 25px;
+  padding: 0 12px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background-color: transparent;
+  font-size: 14px;
+  line-height: 20px;
+  transition:
+    background-color 150ms,
+    border-color 150ms;
+}
+.dialog-create-pull-request-open-page:hover:not(:disabled),
+.dialog-create-pull-request-open-page:focus-visible:not(:disabled) {
+  background-color: rgb(228, 230, 234);
+  border-color: rgb(210, 213, 218);
+}
+.dialog-create-pull-request-open-page-wrap {
+  position: relative;
+}
+.dialog-create-pull-request-open-page-hint {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 4px);
+  z-index: 1;
+  max-width: 280px;
+  transform: translateX(-50%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  box-sizing: border-box;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid rgb(232, 233, 236);
+  background-color: rgb(255, 255, 255);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+  color: rgb(25, 28, 31);
+  transition: opacity 0.12s ease;
+}
+.dialog-create-pull-request-open-page-wrap[data-disabled]:hover .dialog-create-pull-request-open-page-hint,
+.dialog-create-pull-request-open-page-wrap[data-disabled]:focus-within .dialog-create-pull-request-open-page-hint {
+  opacity: 1;
+}
+.dialog-create-pull-request-submit {
+  height: 25px !important;
+  min-height: 25px !important;
+  max-height: 25px !important;
+  padding: 0 22px !important;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 20px !important;
+}
+
+.dialog-create-pull-request-submit:disabled {
+  background-color: rgb(156, 160, 166) !important;
+}
+
+.dialog-create-pull-request-step-icon[data-component="icon"],
+.dialog-create-pull-request-step-icon[data-component="git-pull-request-create-icon"],
+svg.dialog-create-pull-request-step-icon {
+  width: 22px !important;
+  height: 22px !important;
+  flex-shrink: 0;
+}
+
+.dialog-create-pull-request-step-check {
+  color: rgb(25, 28, 31);
+}
+
+.dialog-create-pull-request-step-button {
+  height: 40px;
+  min-height: 40px;
+  max-height: 40px;
+  padding: 0 14px;
+  box-sizing: border-box;
+  background-color: transparent;
+}
+
+.dialog-create-pull-request-step {
+  height: 40px;
+  min-height: 40px;
+  overflow: visible;
+}
+
+.dialog-create-pull-request-step[data-disabled] .dialog-create-pull-request-step-button {
+  pointer-events: none;
+}
+
+.dialog-create-pull-request-steps {
+  overflow: visible;
+}
+
+.dialog-create-pull-request-step-hint-slot {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  z-index: 2;
+  max-width: calc(100% - 28px);
+  transform: translateX(-50%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  box-sizing: border-box;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid rgb(232, 233, 236);
+  background-color: rgb(255, 255, 255);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+  color: rgb(25, 28, 31);
+  transition: opacity 0.12s ease;
+}
+
+.dialog-create-pull-request-step-hint-slot.is-visible {
+  opacity: 1;
+}
+
+.dialog-create-pull-request-step > .dialog-create-pull-request-step-hint-slot {
+  bottom: 0;
+  height: auto;
+  transform: translateX(-50%);
+}
+
+.dialog-create-pull-request-step-hint-slot--first {
+  top: 0;
+  bottom: auto;
+  transform: translate(-50%, -100%);
+}
+
+/* 分支切换确认：固定 400×200（覆盖 codex-dialog-narrow 默认尺寸） */
+[data-component="dialog"]:has(.dialog-branch-switch) [data-slot="dialog-container"] {
+  width: min(calc(100vw - 16px), 400px) !important;
+  height: 200px !important;
+}
+[data-component="dialog"]:has(.dialog-branch-switch) [data-slot="dialog-content"] {
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  border-radius: 12px !important;
+}
+[data-component="dialog"]:has(.dialog-branch-switch) [data-slot="dialog-header"] {
+  flex-shrink: 0 !important;
+}
+[data-component="dialog"]:has(.dialog-branch-switch) [data-slot="dialog-body"] {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+[data-component="dialog"]:has(.dialog-branch-switch) [data-slot="dialog-branch-switch-files"] {
+  min-height: 20px;
+  flex-shrink: 0;
+}
+
+/* 分支切换确认：标题大黑体（对齐 Codex / dialog.push） */
+[data-component="dialog"]:has(.dialog-branch-switch) [data-slot="dialog-header"] {
+  padding: 20px 20px 8px !important;
+}
+[data-component="dialog"]:has(.dialog-branch-switch) [data-slot="dialog-title"] {
+  font-size: 22px !important;
+  font-weight: 600 !important;
+  line-height: 28px !important;
+  letter-spacing: -0.01em !important;
+  color: light-dark(rgb(25, 28, 31), var(--text-strong)) !important;
+}
+
+/* 分支切换确认：+/- 统计紧贴 */
+[data-component="dialog"]:has(.dialog-branch-switch) [data-component="diff-changes"] {
+  gap: 2px;
+}
+
+/* 分支切换确认：取消浅灰底 / 主按钮黑底悬浮变亮灰（对齐 Codex） */
+[data-component="dialog"]:has(.dialog-branch-switch) [data-component="button"].dialog-branch-switch-cancel {
+  border-color: transparent !important;
+  box-shadow: none !important;
+  background-color: rgb(238, 239, 242) !important;
+  color: rgb(25, 28, 31) !important;
+  padding: 6px 14px !important;
+  border-radius: 8px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 20px !important;
+  transition: background-color 0.15s ease;
+}
+[data-component="dialog"]:has(.dialog-branch-switch)
+  [data-component="button"].dialog-branch-switch-cancel:hover:not(:disabled),
+[data-component="dialog"]:has(.dialog-branch-switch)
+  [data-component="button"].dialog-branch-switch-cancel:focus-visible:not(:disabled) {
+  background-color: rgb(218, 220, 224) !important;
+}
+[data-component="dialog"]:has(.dialog-branch-switch)
+  [data-component="button"].dialog-branch-switch-cancel:active:not(:disabled) {
+  background-color: rgb(202, 204, 208) !important;
+}
+[data-component="dialog"]:has(.dialog-branch-switch) [data-component="button"].dialog-branch-switch-primary {
+  border-color: transparent !important;
+  box-shadow: none !important;
+  background-color: rgb(25, 28, 31) !important;
+  color: rgb(255, 255, 255) !important;
+  padding: 6px 14px !important;
+  border-radius: 8px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 20px !important;
+  transition: background-color 0.15s ease;
+}
+[data-component="dialog"]:has(.dialog-branch-switch)
+  [data-component="button"].dialog-branch-switch-primary:hover:not(:disabled),
+[data-component="dialog"]:has(.dialog-branch-switch)
+  [data-component="button"].dialog-branch-switch-primary:focus-visible:not(:disabled) {
+  background-color: rgb(82, 86, 90) !important;
+}
+[data-component="dialog"]:has(.dialog-branch-switch)
+  [data-component="button"].dialog-branch-switch-primary:active:not(:disabled) {
+  background-color: rgb(45, 48, 51) !important;
+}
+
+.windows-settings-route[data-component="settings-route-root"] .settings-route-content {
+  max-width: 720px !important;
+}
+
+.windows-settings-route[data-component="settings-route-root"] main {
+  overflow-y: auto !important;
+}
+
+.windows-settings-route[data-component="settings-route-root"] .settings-scrollbar {
+  background: transparent !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.windows-settings-route[data-component="settings-route-root"] .settings-scrollbar {
+  height: auto !important;
+  min-height: 100% !important;
+  overflow: visible !important;
+}
+
+/* 插件页未安装「+」按钮的圆形底盘（已安装 √ 为裸图标无底色）：wanlai-theme 浅色把
+   surface-raised-base 覆盖成 #FFFFFF，与纯白页面背景同色导致圆底隐形。主题 token
+   被多处共用不能改，仅在该主题浅色下把这个按钮换到同主题的 surface-base 灰阶；
+   其余主题/深色不受影响。hover 再加深一档，避免与行 hover 的 surface-base 同色。 */
+:root[data-theme="wanlai-theme"][data-color-scheme="light"] .plugins-install-button {
+  background-color: var(--surface-base);
+}
+:root[data-theme="wanlai-theme"][data-color-scheme="light"] .plugins-install-button:hover:not(:disabled) {
+  background-color: var(--surface-base-active);
+}
+
+.model-list-refresh-button-wrap {
+  cursor: pointer;
+}
+
+.model-list-refresh-button-wrap[data-refreshing="true"] {
+  cursor: default;
+}
+
+.purchase-plans-grid {
+  --purchase-plan-accent: rgb(201, 162, 39);
+}
+
+:root[data-color-scheme="dark"] .purchase-plans-grid {
+  --purchase-plan-accent: rgb(212, 175, 55);
+}
+
+.purchase-plan-card {
+  appearance: none;
+  box-shadow: var(--shadow-xs-border-base);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease,
+    opacity 0.18s ease;
+}
+
+.purchase-plan-card:enabled:hover,
+.purchase-plan-card:enabled:focus-visible {
+  border-color: color-mix(in srgb, var(--purchase-plan-accent) 70%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--purchase-plan-accent) 40%, transparent),
+    0 8px 24px -12px color-mix(in srgb, var(--purchase-plan-accent) 35%, transparent);
+  transform: translateY(-2px);
+}
+
+.purchase-plan-card--current {
+  border-color: var(--purchase-plan-accent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--purchase-plan-accent) 35%, transparent),
+    var(--shadow-xs-border-base);
+  background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--purchase-plan-accent) 7%, transparent) 0%,
+      transparent 45%
+    )
+    var(--background-base);
+}
+
+.purchase-plan-card__badge {
+  background-color: var(--purchase-plan-accent);
+  /* 金底固定配深字：浅色模式下白字对比度不足 3:1 */
+  color: rgb(46, 37, 6);
+}
+
+.purchase-plan-card__price {
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+.purchase-plan-card__header {
+  padding-bottom: 0.875rem;
+  border-bottom: 1px solid var(--border-weaker-base);
+}
+
+.purchase-plan-card__quota-row {
+  min-height: 1.875rem;
+}
+
+.purchase-plan-card__quota-row + .purchase-plan-card__quota-row {
+  border-top: 1px dashed var(--border-weaker-base);
+}
+
+.purchase-plan-card__quota-row--placeholder {
+  visibility: hidden;
+}
+
+.purchase-plan-card__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 36px;
+  padding-inline: 12px;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: var(--radius-md);
+  user-select: none;
+  white-space: normal;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-normal);
+  line-height: var(--line-height-large);
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.purchase-plan-card__cta[data-variant="primary"] {
+  background-color: var(--button-primary-base);
+  border-color: transparent;
+  color: var(--icon-invert-base);
+}
+
+.purchase-plan-card:enabled:hover .purchase-plan-card__cta[data-variant="primary"] {
+  background-color: var(--button-primary-hover, var(--button-primary-base));
+}
+
+.purchase-plan-card__cta[data-variant="secondary"] {
+  border-color: transparent;
+  background-color: var(--button-secondary-base);
+  color: var(--text-strong);
+  box-shadow: var(--shadow-xs-border-base);
+}
+
+/* 当前套餐 CTA：金色描边幽灵按钮，与卡片描边呼应 */
+.purchase-plan-card__cta[data-variant="current"] {
+  border-color: color-mix(in srgb, var(--purchase-plan-accent) 55%, transparent);
+  background-color: transparent;
+  color: var(--purchase-plan-accent);
+}
+
+.purchase-plan-card:enabled:hover .purchase-plan-card__cta[data-variant="current"] {
+  background-color: color-mix(in srgb, var(--purchase-plan-accent) 10%, transparent);
+}
+
+/* 不可购：纯文本态，不伪装成按钮 */
+.purchase-plan-card__cta[data-variant="muted"] {
+  border-color: transparent;
+  background-color: transparent;
+  color: var(--text-weak);
+  font-weight: var(--font-weight-regular);
+}
+
+.model-list-refresh-button:not([data-refreshing="true"]) {
+  cursor: pointer;
+}
+
+.model-list-refresh-button[data-refreshing="true"],
+.model-list-refresh-button[data-refreshing="true"]:hover,
+.model-list-refresh-button[data-refreshing="true"]:focus,
+.model-list-refresh-button[data-refreshing="true"]:focus-visible,
+.model-list-refresh-button[data-refreshing="true"]:active {
+  pointer-events: none;
+  cursor: default;
+  background-color: transparent !important;
+  box-shadow: none;
+}
+
+.model-list-refresh-button[data-refreshing="true"]:hover [data-slot="icon-svg"],
+.model-list-refresh-button[data-refreshing="true"]:focus [data-slot="icon-svg"],
+.model-list-refresh-button[data-refreshing="true"]:focus-visible [data-slot="icon-svg"],
+.model-list-refresh-button[data-refreshing="true"]:active [data-slot="icon-svg"] {
+  color: var(--icon-weak-base);
+}
+
+.model-list-refresh-button [data-slot="icon-svg"] {
+  color: var(--icon-weak-base);
+  transform: none;
+}
+
+.model-list-refresh-button:hover:not(:disabled) [data-slot="icon-svg"],
+.model-list-refresh-button:focus-visible:not(:disabled) [data-slot="icon-svg"] {
+  color: var(--icon-base);
+}
+
+.model-list-refresh-button[data-refreshing="true"] [data-slot="icon-svg"] {
+  transform-origin: center;
+  animation: model-list-refresh-spin 0.8s linear infinite;
+}
+
+@keyframes model-list-refresh-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── 全屏设置:对齐 Codex 的流畅 + 毛玻璃体验 ──
+   会话常挂载(见 app.tsx / layout.tsx)但用 visibility 隐藏:不绘制 → 露出 macOS 窗口 vibrancy
+   (毛玻璃侧栏才有桌面透视,而非糊会话),且不卸载 → 无重建卡顿;设置本身重新 visible。
+   入场动画自包含定义(不依赖 dialog.css 懒加载),reduced-motion 降级。 */
+[data-component="app-layout-root"]:has([data-component="settings-route-root"]),
+[data-component="app-layout-root"]:has([data-component="users-route-root"]) {
+  visibility: visible;
+}
+[data-component="app-layout-root"]:has([data-component="settings-route-root"])
+  > :not([data-component="windows-titlebar"]):not([data-component="settings-route-root"]),
+[data-component="app-layout-root"]:has([data-component="users-route-root"])
+  > :not([data-component="windows-titlebar"]):not([data-component="users-route-root"]) {
+  visibility: hidden;
+}
+[data-component="settings-route-root"],
+[data-component="users-route-root"] {
+  visibility: visible;
+}
+@keyframes settings-entry {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-component="settings-route-root"],
+  [data-component="users-route-root"] {
+    animation: settings-entry 150ms ease-out;
+  }
+}
+
+/* Codex MCP management pages use the light, opaque surface hierarchy from the reference screens. */
+:root[data-color-scheme="light"] [data-page="plugins-manage"],
+:root[data-color-scheme="light"] [data-page="mcp-editor"] {
+  --background-base: #ffffff;
+  --background-stronger: #ffffff;
+  --surface-base: #f3f4f4;
+  --surface-base-hover: #ededed;
+  --input-base: #ffffff;
+  --text-weak: #696a6c;
+  --border-weak-base: #e4e4e5;
+  --border-weaker-base: rgba(26, 28, 31, 0.08);
+  --color-background-base: var(--background-base);
+  --color-background-stronger: var(--background-stronger);
+  --color-surface-base: var(--surface-base);
+  --color-surface-base-hover: var(--surface-base-hover);
+  --color-input-base: var(--input-base);
+  --color-text-weak: var(--text-weak);
+  --color-border-weak-base: var(--border-weak-base);
+  --color-border-weaker-base: var(--border-weaker-base);
+}
+
+/* Codex MCP editor fields use the larger, quieter form rhythm from the reference screens. */
+[data-page="mcp-editor"] [data-component="input"][data-variant="normal"] {
+  gap: 10px;
+}
+
+[data-page="mcp-editor"] [data-component="input"][data-variant="normal"] [data-slot="input-label"] {
+  color: var(--text-strong);
+  font-size: 18px;
+  font-weight: var(--font-weight-regular);
+  line-height: 27px;
+}
+
+[data-page="mcp-editor"] [data-component="input"][data-variant="normal"] [data-slot="input-input"] {
+  height: 44px;
+  padding: 8px 12px;
+  font-size: 18px;
+  line-height: 24px;
+}
+
+[data-page="mcp-editor"] [data-component="input"][data-variant="normal"] [data-slot="input-wrapper"] {
+  border-radius: 10px;
+}
+
+[data-page="mcp-editor"]
+  [data-component="input"][data-variant="normal"]
+  [data-slot="input-wrapper"]:has([data-mcp-compact-field]),
+[data-page="mcp-editor"]
+  [data-component="input"][data-variant="normal"]
+  [data-slot="input-input"][data-mcp-compact-field] {
+  height: 42px;
+}
+
+[data-page="mcp-editor"]
+  [data-component="input"][data-variant="normal"]
+  [data-slot="input-wrapper"]:has([data-mcp-single-row-field]),
+[data-page="mcp-editor"]
+  [data-component="input"][data-variant="normal"]
+  [data-slot="input-input"][data-mcp-single-row-field] {
+  height: 45.5px;
+}
+
+[data-page="mcp-editor"] [data-mcp-add-row] {
+  height: 36px;
+  gap: 4px;
+  border-radius: 10px;
+  padding: 0 8px;
+  font-size: 18px;
+  font-weight: var(--font-weight-regular);
+  line-height: 24px;
+}
+
+[data-page="mcp-editor"] [data-mcp-row-delete] {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+}
+
+[data-page="mcp-editor"] [data-mcp-row-delete] [data-slot="icon-svg"] {
+  color: var(--icon-disabled);
+}
+
+:root[data-color-scheme="light"]
+  [data-page="mcp-editor"]
+  [data-mcp-row-delete]
+  [data-slot="icon-svg"] {
+  color: #d1d2d2;
+}
+
+[data-page="mcp-editor"] [data-mcp-action] {
+  height: 36px;
+  gap: 4px;
+  border-radius: 12px;
+  padding: 0 10px;
+  font-size: 18px;
+  font-weight: var(--font-weight-regular);
+  line-height: 24px;
+}
+
+:root[data-color-scheme="light"] [data-page="mcp-editor"] [data-mcp-action="uninstall"] {
+  --mcp-uninstall-color: #e02e2a;
+  --color-text-on-critical-base: var(--mcp-uninstall-color);
+  --color-surface-critical-weak: rgb(224 46 42 / 10%);
+  gap: 5px;
+  font-weight: 450;
+}
+
+:root[data-color-scheme="light"]
+  [data-page="mcp-editor"]
+  [data-mcp-action="uninstall"]:hover:not(:disabled) {
+  --color-surface-critical-weak: rgb(224 46 42 / 20%);
+}
+
+:root[data-color-scheme="light"]
+  [data-page="mcp-editor"]
+  [data-mcp-action="uninstall"]:not(:disabled) [data-slot="icon-svg"] {
+  color: var(--mcp-uninstall-color);
+}

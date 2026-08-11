@@ -1,0 +1,12 @@
+[data-component="logo-mark"] {
+  width: 16px;
+  aspect-ratio: 4/5;
+}
+
+:root {
+  --logo-glyph: #F0C419;
+}
+
+[data-color-scheme="light"] {
+  --logo-glyph: #fcfcfc;
+}

@@ -1,0 +1,530 @@
+/* Codex-style native sidebar material.
+ *
+ * The blur comes from Electron's native backdrop (macOS vibrancy / Windows Mica).
+ * The renderer keeps the app chrome transparent and adds only a light glass
+ * tint over the native material, so the window stays bright instead of gray.
+ */
+
+html[data-window="loading"],
+html[data-window="loading"] body,
+html[data-window="loading"] #root {
+  background: transparent !important;
+}
+
+[data-component="desktop-loading-root"] {
+  position: relative;
+  overflow: hidden;
+  background: transparent;
+  -webkit-app-region: drag;
+}
+
+#desktop-startup-cover {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-app-region: drag;
+  opacity: 1;
+  transition: opacity 160ms ease;
+}
+
+#desktop-startup-cover[data-state="leaving"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+[data-component="desktop-loading-root"]::before {
+  position: fixed;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  backdrop-filter: blur(48px) saturate(1.45);
+  -webkit-backdrop-filter: blur(48px) saturate(1.45);
+  background: light-dark(rgba(255, 255, 255, 0.08), rgba(18, 20, 24, 0.08));
+}
+
+:root[data-desktop-os="windows"][data-window="loading"],
+:root[data-desktop-os="windows"][data-window="loading"] body,
+:root[data-desktop-os="windows"][data-window="loading"] #root,
+:root[data-desktop-os="windows"] #desktop-startup-cover,
+:root[data-desktop-os="windows"] [data-component="desktop-loading-root"] {
+  background: var(--windows-statusbar-bg, light-dark(#ffffff, #181818)) !important;
+  background-color: var(--windows-statusbar-bg, light-dark(#ffffff, #181818)) !important;
+}
+
+:root[data-desktop-os="windows"] [data-component="desktop-loading-root"]::before {
+  background: var(--windows-statusbar-bg, light-dark(#ffffff, #181818)) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+[data-component="desktop-loading-glass"] {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter:
+    drop-shadow(0 18px 38px rgba(0, 0, 0, 0.18))
+    drop-shadow(0 0 18px rgba(241, 191, 28, 0.18));
+  animation: desktop-loading-logo-presence 4.8s ease-in-out infinite;
+}
+
+[data-slot="desktop-loading-logo"] {
+  position: relative;
+  display: block;
+  width: 74px;
+  aspect-ratio: 520 / 420;
+  -webkit-app-region: no-drag;
+  --desktop-loading-logo-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 520 420'%3E%3Cpath fill='black' d='M64 210 104 170 184 250 264 170 344 250 424 170 464 210 424 250 344 330 264 250 184 330 104 250zM264 40 304 80 264 120 224 80zM184 120 224 160 184 200 144 160zM344 120 384 160 344 200 304 160zM264 330 304 370 264 410 224 370z'/%3E%3C/svg%3E");
+}
+
+[data-slot="desktop-loading-logo-svg"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+[data-slot="desktop-loading-logo-sketch"] {
+  /* 加载页 logo 底色固定为品牌纯色，扫光只通过上层遮罩短暂提亮。 */
+  fill: #f6c51d;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 9px rgba(241, 191, 28, 0.14));
+}
+
+[data-slot="desktop-loading-logo-sweep"] {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  mask-image: var(--desktop-loading-logo-mask);
+  mask-repeat: no-repeat;
+  mask-size: 100% 100%;
+  -webkit-mask-image: var(--desktop-loading-logo-mask);
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+}
+
+[data-slot="desktop-loading-logo-sweep"]::before {
+  position: absolute;
+  top: -44%;
+  bottom: -44%;
+  width: 24%;
+  content: "";
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 244, 184, 0.08) 18%,
+    rgba(255, 255, 255, 0.82) 50%,
+    rgba(255, 244, 184, 0.16) 78%,
+    transparent 100%
+  );
+  opacity: 0;
+  transform: translateX(-180%) rotate(18deg);
+  will-change: transform, opacity;
+  animation: desktop-loading-logo-sweep 3.2s cubic-bezier(0.18, 0, 0.2, 1) infinite;
+}
+
+@keyframes desktop-loading-logo-presence {
+  0%,
+  100% {
+    filter:
+      drop-shadow(0 18px 38px rgba(0, 0, 0, 0.18))
+      drop-shadow(0 0 14px rgba(241, 191, 28, 0.14));
+  }
+
+  50% {
+    filter:
+      drop-shadow(0 18px 38px rgba(0, 0, 0, 0.18))
+      drop-shadow(0 0 24px rgba(241, 191, 28, 0.24));
+  }
+}
+
+@keyframes desktop-loading-logo-sweep {
+  0%,
+  18% {
+    transform: translateX(-180%) rotate(18deg);
+    opacity: 0;
+  }
+
+  30% {
+    opacity: 0.72;
+  }
+
+  48% {
+    opacity: 0.42;
+  }
+
+  62% {
+    transform: translateX(520%) rotate(18deg);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateX(520%) rotate(18deg);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-component="desktop-loading-glass"] {
+    animation: none;
+  }
+
+  [data-slot="desktop-loading-logo-sweep"]::before {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+:root:is([data-desktop-os="macos"], [data-desktop-os="windows"]),
+:root:is([data-desktop-os="macos"], [data-desktop-os="windows"]) body,
+:root:is([data-desktop-os="macos"], [data-desktop-os="windows"]) #root {
+  background: transparent !important;
+}
+
+:root:is([data-desktop-os="macos"], [data-desktop-os="windows"]) [data-component="app-layout-root"],
+:root:is([data-desktop-os="macos"], [data-desktop-os="windows"]) [data-component="settings-route-root"],
+:root:is([data-desktop-os="macos"], [data-desktop-os="windows"]) [data-component="users-route-root"] {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+:root[data-desktop-os="macos"] [data-slot="main-bg-fill"] {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+:root[data-desktop-os="macos"] [data-component="settings-route-root"] [data-slot="main-bg-fill"],
+:root[data-desktop-os="macos"] [data-component="users-route-root"] [data-slot="main-bg-fill"] {
+  background: linear-gradient(to right, var(--settings-sidebar-glass-bg) 0 12px, var(--background-base) 12px) !important;
+}
+
+:root[data-desktop-os="windows"] {
+  --windows-window-corner-radius: 8px;
+}
+
+:root[data-desktop-os="windows"] #root {
+  border-radius: var(--windows-window-corner-radius);
+  overflow: hidden;
+}
+
+:root[data-desktop-os="windows"][data-window-maximized="true"] #root {
+  border-radius: 0;
+}
+
+:root[data-desktop-os="windows"] [data-slot="main-bg-fill"] {
+  background: var(--windows-statusbar-bg, var(--background-base)) !important;
+  background-color: var(--windows-statusbar-bg, var(--background-base)) !important;
+}
+
+:root:is([data-desktop-os="macos"], [data-desktop-os="windows"]) [data-component="windows-titlebar"] {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+:root:is([data-desktop-os="macos"], [data-desktop-os="windows"]) [data-component="app-shell-left-panel"],
+:root:is([data-desktop-os="macos"], [data-desktop-os="windows"]) nav[data-component="sidebar-nav-desktop"] > div > div,
+:root:is([data-desktop-os="macos"], [data-desktop-os="windows"]) nav[data-component="sidebar-nav-mobile"] > div,
+:root:is([data-desktop-os="macos"], [data-desktop-os="windows"]) .settings-route-sidebar {
+  /* light-dark() follows ThemeProvider's root color-scheme, which is written with data-color-scheme. */
+  background: light-dark(rgba(255, 255, 255, 0.38), rgba(18, 18, 18, 0.38)) !important;
+  background-color: light-dark(rgba(255, 255, 255, 0.38), rgba(18, 18, 18, 0.38)) !important;
+  backdrop-filter: blur(34px) saturate(1.85) brightness(1.06);
+  -webkit-backdrop-filter: blur(34px) saturate(1.85) brightness(1.06);
+}
+
+/* Windows only: mobile drawer overlays main content — solid bg so text stays readable */
+:root[data-desktop-os="windows"] nav[data-component="sidebar-nav-mobile"],
+:root[data-desktop-os="windows"] nav[data-component="sidebar-nav-mobile"] [data-component="app-shell-left-panel"],
+:root[data-desktop-os="windows"] nav[data-component="sidebar-nav-mobile"] > div {
+  background: var(--background-base) !important;
+  background-color: var(--background-base) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root:is([data-desktop-os="macos"], [data-desktop-os="windows"]) [data-component="app-shell-left-panel"] {
+  position: relative;
+  overflow: visible;
+}
+
+:root:is([data-desktop-os="macos"], [data-desktop-os="windows"]) nav[data-component="sidebar-nav-desktop"] > div {
+  contain: size layout style;
+  overflow: visible;
+}
+
+:root:is([data-desktop-os="macos"], [data-desktop-os="windows"]) [data-component="app-shell-left-panel"]::after {
+  position: absolute;
+  content: "";
+  pointer-events: none;
+  inset: 0 -12px 0 auto;
+  width: 12px;
+  background: inherit;
+}
+
+:root:is([data-desktop-os="macos"], [data-desktop-os="windows"]) .settings-route-sidebar::after {
+  position: absolute;
+  content: "";
+  pointer-events: none;
+  /* 主面圆角切口由 main-bg-fill 下层背景承接，这里禁用整高扩展，避免竖线。 */
+  inset: 0;
+  width: 0;
+  background: transparent;
+}
+
+:root:is([data-desktop-os="macos"], [data-desktop-os="windows"]) .account-popover {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: light-dark(rgba(255, 255, 255, 0.54), rgba(22, 22, 22, 0.56)) !important;
+  background-color: light-dark(rgba(255, 255, 255, 0.54), rgba(22, 22, 22, 0.56)) !important;
+  border-color: light-dark(rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.16)) !important;
+  box-shadow:
+    0 26px 60px light-dark(rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0.42)),
+    0 0 0 1px light-dark(rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0.05)),
+    inset 0 1px 0 light-dark(rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.1)) !important;
+  backdrop-filter: blur(116px) saturate(1.75) brightness(1.07);
+  -webkit-backdrop-filter: blur(116px) saturate(1.75) brightness(1.07);
+}
+
+:root:is([data-desktop-os="macos"], [data-desktop-os="windows"]) .account-popover::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  content: "";
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      light-dark(rgba(255, 255, 255, 0.64), rgba(32, 32, 32, 0.44)),
+      light-dark(rgba(246, 247, 247, 0.58), rgba(18, 18, 18, 0.5))
+    );
+}
+
+:root:is([data-desktop-os="macos"], [data-desktop-os="windows"]) .account-popover [data-slot="popover-body"] {
+  position: relative;
+  z-index: 1;
+  background: transparent !important;
+}
+
+:root:is([data-desktop-os="macos"], [data-desktop-os="windows"]) .account-popover-avatar {
+  background: light-dark(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.08)) !important;
+  box-shadow: inset 0 0 0 1px light-dark(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.08));
+}
+
+:root:is([data-desktop-os="macos"], [data-desktop-os="windows"]) .account-popover-item:hover,
+:root:is([data-desktop-os="macos"], [data-desktop-os="windows"]) .account-popover-item:focus-visible,
+:root:is([data-desktop-os="macos"], [data-desktop-os="windows"]) .account-popover-subitem:hover,
+:root:is([data-desktop-os="macos"], [data-desktop-os="windows"]) .account-popover-subitem:focus-visible {
+  background: light-dark(rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.08)) !important;
+  backdrop-filter: blur(18px) saturate(1.45);
+  -webkit-backdrop-filter: blur(18px) saturate(1.45);
+}
+
+/* wanlai-theme + Windows：浮层叠 Codex elevated-primary（不改 macOS） */
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"] .account-popover {
+  background: var(--desktop-glass-elevated, var(--codex-elevated-primary)) !important;
+  background-color: var(--desktop-glass-elevated, var(--codex-elevated-primary)) !important;
+  border-color: color-mix(in srgb, var(--codex-gray-0, #fff) 44%, transparent) !important;
+  backdrop-filter: blur(28px) saturate(1.75);
+  -webkit-backdrop-filter: blur(28px) saturate(1.75);
+}
+
+:root[data-theme="wanlai-theme"][data-color-scheme="light"][data-desktop-os="windows"] .account-popover {
+  border-color: color-mix(in srgb, var(--codex-gray-0, #fff) 78%, transparent) !important;
+}
+
+:root[data-theme="wanlai-theme"][data-color-scheme="dark"][data-desktop-os="windows"] .account-popover {
+  border-color: rgba(255, 255, 255, 0.084) !important;
+}
+
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"] .account-popover::before {
+  background: transparent;
+}
+
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"] .account-popover-avatar {
+  background: var(--codex-elevated-secondary, rgba(255, 255, 255, 0.08)) !important;
+}
+
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"] .account-popover-item:hover,
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"] .account-popover-item:focus-visible,
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"] .account-popover-subitem:hover,
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"] .account-popover-subitem:focus-visible {
+  background: var(--codex-elevated-secondary) !important;
+}
+
+:root[data-desktop-os="macos"] [data-component="app-shell-left-panel"],
+:root[data-desktop-os="macos"] nav[data-component="sidebar-nav-desktop"] > div > div,
+:root[data-desktop-os="macos"] nav[data-component="sidebar-nav-mobile"] > div,
+:root[data-desktop-os="macos"] .settings-route-sidebar {
+  background: light-dark(rgba(255, 255, 255, 0.34), rgba(18, 18, 18, 0.34)) !important;
+  background-color: light-dark(rgba(255, 255, 255, 0.34), rgba(18, 18, 18, 0.34)) !important;
+  backdrop-filter: blur(34px) saturate(1.85) brightness(1.06);
+  -webkit-backdrop-filter: blur(34px) saturate(1.85) brightness(1.06);
+}
+
+:root[data-desktop-os="windows"] [data-component="app-shell-left-panel"],
+:root[data-desktop-os="windows"] nav[data-component="sidebar-nav-desktop"] > div > div,
+:root[data-desktop-os="windows"] .settings-route-sidebar {
+  background: var(--windows-statusbar-bg, var(--background-base)) !important;
+  background-color: var(--windows-statusbar-bg, var(--background-base)) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-desktop-os="windows"] [data-component="windows-titlebar"] {
+  background: var(--windows-statusbar-bg, var(--background-base)) !important;
+  background-color: var(--windows-statusbar-bg, var(--background-base)) !important;
+}
+
+:root[data-desktop-os="windows"] [data-component="app-shell-left-panel"]::after,
+:root[data-desktop-os="windows"] .settings-route-sidebar::after {
+  background: var(--windows-statusbar-bg, var(--background-base)) !important;
+}
+
+.windows-settings-route {
+  top: 36px !important;
+  background-color: var(--windows-statusbar-bg, var(--background-base)) !important;
+}
+
+:root[data-desktop-os="windows"] .windows-settings-route[data-component="settings-route-root"],
+:root[data-desktop-os="windows"] .windows-settings-route[data-component="users-route-root"] {
+  background: var(--windows-statusbar-bg, var(--background-base)) !important;
+  background-color: var(--windows-statusbar-bg, var(--background-base)) !important;
+}
+
+.windows-settings-route .settings-route-sidebar {
+  padding-top: 16px !important;
+  background: var(--windows-statusbar-bg, var(--background-base)) !important;
+  background-color: var(--windows-statusbar-bg, var(--background-base)) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  -webkit-app-region: drag;
+}
+
+.windows-settings-route .settings-route-sidebar button,
+.windows-settings-route [data-component="resize-handle"] {
+  -webkit-app-region: no-drag;
+}
+
+.windows-settings-route main {
+  background-color: var(--background-base) !important;
+  border: 1px solid var(--windows-statusbar-border, var(--border-weak-base));
+}
+
+/* wanlai-theme + Windows Mica：chrome 用 glass tint；仅清掉 desktop 中间 wrapper，避免实色/叠层压住 Mica */
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"] [data-component="windows-titlebar"],
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"] [data-component="app-shell-left-panel"],
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"] .settings-route-sidebar,
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"] nav[data-component="sidebar-nav-desktop"] > div > div {
+  background: var(--desktop-glass-tint) !important;
+  background-color: var(--desktop-glass-tint) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"] nav[data-component="sidebar-nav-desktop"] > div {
+  background: transparent !important;
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"] nav[data-component="sidebar-nav-mobile"],
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"] nav[data-component="sidebar-nav-mobile"] [data-component="app-shell-left-panel"],
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"] nav[data-component="sidebar-nav-mobile"] > div {
+  background: var(--background-base) !important;
+  background-color: var(--background-base) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"] [data-component="app-shell-left-panel"]::after,
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"] .settings-route-sidebar::after {
+  background: inherit !important;
+}
+
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"] .windows-settings-route,
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"] .windows-settings-route[data-component="settings-route-root"],
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"] .windows-settings-route[data-component="users-route-root"] {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"] .windows-settings-route .settings-route-sidebar {
+  background: var(--desktop-glass-tint) !important;
+  background-color: var(--desktop-glass-tint) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"] [data-slot="main-bg-fill"] {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+:root[data-theme="wanlai-theme"][data-desktop-os="windows"][data-windows-backdrop="mica"] [data-slot="main-bg-fill"] > main {
+  background-color: var(--codex-surface, var(--background-base)) !important;
+}
+
+:root[data-desktop-os="windows"] .codex-sidebar-thread-idle,
+:root[data-desktop-os="windows"] .codex-sidebar-thread-active,
+:root[data-desktop-os="windows"] .glass-sidebar-menu-row-idle,
+:root[data-desktop-os="windows"] .glass-sidebar-menu-row-active {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-desktop-os="windows"] .codex-sidebar-thread-active,
+:root[data-desktop-os="windows"] .glass-sidebar-menu-row-active {
+  background: var(--windows-statusbar-row-active, var(--surface-base)) !important;
+  box-shadow: none !important;
+}
+
+:root[data-desktop-os="windows"] .codex-sidebar-thread-idle:hover,
+:root[data-desktop-os="windows"] .glass-sidebar-menu-row-idle:hover {
+  background: var(--windows-statusbar-row-hover, var(--surface-base-hover)) !important;
+}
+
+/* sidecar 启动迟迟不就绪时的可见诊断：默认不出现，只在 server_unreachable 阶段渲染 */
+[data-slot="desktop-loading-notice"] {
+  position: relative;
+  z-index: 1;
+  margin-top: 22px;
+  max-width: 320px;
+  padding: 0 24px;
+  text-align: center;
+  -webkit-app-region: no-drag;
+  animation: desktop-loading-notice-in 240ms ease-out both;
+}
+
+[data-slot="desktop-loading-notice-title"] {
+  font-size: 13px;
+  font-weight: 500;
+  color: light-dark(rgba(24, 26, 30, 0.86), rgba(255, 255, 255, 0.9));
+}
+
+[data-slot="desktop-loading-notice-hint"] {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: light-dark(rgba(24, 26, 30, 0.52), rgba(255, 255, 255, 0.56));
+}
+
+@keyframes desktop-loading-notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,0 +1,14 @@
+[data-component="file-icon"] {
+  display: block;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
+
+/*
+  File tree: show colored file-type icons by default.
+  Monochrome styling for ignored files.
+*/
+[data-component="filetree"] .filetree-icon--mono {
+  color: var(--icon-base);
+}

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Skill Creator">
+  <rect width="128" height="128" rx="28" fill="#111827"/>
+  <path d="M30 36h68v10H30zM30 58h40v10H30zM30 80h52v10H30z" fill="#F9FAFB"/>
+  <path d="M88 58l5 11 12 2-9 8 2 12-10-6-11 6 3-12-9-8 12-2z" fill="#38BDF8"/>
+</svg>

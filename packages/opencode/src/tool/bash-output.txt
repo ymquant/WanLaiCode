@@ -1,0 +1,8 @@
+Retrieves output from a background shell started by the bash tool (run_in_background) or auto-moved to the background after a timeout.
+
+- Pass the background id (e.g. bash_1) shown when the command was backgrounded.
+- Returns only NEW output since your last bash-output call for that id (incremental).
+- Reports whether the process is still running or has exited (with its exit code).
+- Optional `filter` is a literal substring; only lines containing that string are returned (no regex support).
+
+Use this to monitor long-running commands and decide whether to keep waiting, change strategy, or stop them with kill-shell.

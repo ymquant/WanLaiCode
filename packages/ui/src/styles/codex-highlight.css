@@ -1,0 +1,73 @@
+[data-component="markdown"] .hljs {
+  color: var(--syntax-base);
+  background: transparent;
+}
+
+[data-component="markdown"] .hljs-comment,
+[data-component="markdown"] .hljs-quote {
+  color: var(--syntax-comment);
+  font-style: italic;
+}
+
+[data-component="markdown"] .hljs-doctag,
+[data-component="markdown"] .hljs-keyword,
+[data-component="markdown"] .hljs-formula {
+  color: var(--syntax-keyword);
+}
+
+[data-component="markdown"] .hljs-section,
+[data-component="markdown"] .hljs-name,
+[data-component="markdown"] .hljs-selector-tag,
+[data-component="markdown"] .hljs-deletion,
+[data-component="markdown"] .hljs-subst {
+  color: var(--syntax-tag);
+}
+
+[data-component="markdown"] .hljs-literal {
+  color: var(--syntax-constant);
+}
+
+[data-component="markdown"] .hljs-string,
+[data-component="markdown"] .hljs-regexp,
+[data-component="markdown"] .hljs-addition,
+[data-component="markdown"] .hljs-attribute,
+[data-component="markdown"] .hljs-meta-string {
+  color: var(--syntax-string);
+}
+
+[data-component="markdown"] .hljs-built_in,
+[data-component="markdown"] .hljs-class .hljs-title {
+  color: var(--syntax-object);
+}
+
+[data-component="markdown"] .hljs-attr,
+[data-component="markdown"] .hljs-variable,
+[data-component="markdown"] .hljs-template-variable,
+[data-component="markdown"] .hljs-type,
+[data-component="markdown"] .hljs-selector-class,
+[data-component="markdown"] .hljs-selector-attr,
+[data-component="markdown"] .hljs-selector-pseudo,
+[data-component="markdown"] .hljs-number {
+  color: var(--syntax-number);
+}
+
+[data-component="markdown"] .hljs-symbol,
+[data-component="markdown"] .hljs-bullet,
+[data-component="markdown"] .hljs-link,
+[data-component="markdown"] .hljs-meta,
+[data-component="markdown"] .hljs-selector-id,
+[data-component="markdown"] .hljs-title {
+  color: var(--syntax-function);
+}
+
+[data-component="markdown"] .hljs-emphasis {
+  font-style: italic;
+}
+
+[data-component="markdown"] .hljs-strong {
+  font-weight: 700;
+}
+
+[data-component="markdown"] .hljs-link {
+  text-decoration: underline;
+}

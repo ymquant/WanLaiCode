@@ -1,0 +1,409 @@
+{
+  "entries": [
+    {
+      "reason": "ACCESS_DENIED",
+      "category": "invalid_request"
+    },
+    {
+      "reason": "ACCESS_TOKEN_EXPIRED",
+      "category": "auth_expired"
+    },
+    {
+      "reason": "ACCOUNT_SECURITY_SUSPENDED",
+      "category": "account_disabled"
+    },
+    {
+      "reason": "API_KEY_DISABLED",
+      "category": "api_key_invalid"
+    },
+    {
+      "reason": "API_KEY_EXPIRED",
+      "category": "api_key_invalid"
+    },
+    {
+      "reason": "API_KEY_INACTIVE",
+      "category": "api_key_invalid"
+    },
+    {
+      "reason": "API_KEY_NOT_FOUND",
+      "category": "api_key_invalid"
+    },
+    {
+      "reason": "API_KEY_NO_GROUP",
+      "category": "api_key_invalid"
+    },
+    {
+      "reason": "API_KEY_QUOTA_EXHAUSTED",
+      "category": "quota_exhausted"
+    },
+    {
+      "reason": "API_KEY_RATE_1D_EXCEEDED",
+      "category": "quota_exhausted"
+    },
+    {
+      "reason": "API_KEY_RATE_5H_EXCEEDED",
+      "category": "quota_exhausted"
+    },
+    {
+      "reason": "API_KEY_RATE_7D_EXCEEDED",
+      "category": "quota_exhausted"
+    },
+    {
+      "reason": "API_KEY_RATE_LIMITED",
+      "category": "rate_limited"
+    },
+    {
+      "reason": "API_KEY_REQUIRED",
+      "category": "api_key_invalid"
+    },
+    {
+      "reason": "BALANCE_FALLBACK_UNAVAILABLE",
+      "category": "entitlement_missing"
+    },
+    {
+      "reason": "BALANCE_MODEL_NOT_AVAILABLE",
+      "category": "upgrade_required"
+    },
+    {
+      "reason": "BILLING_ERROR",
+      "category": "unknown"
+    },
+    {
+      "reason": "BILLING_SERVICE_ERROR",
+      "category": "service_unavailable"
+    },
+    {
+      "reason": "CONFLICT",
+      "category": "invalid_request"
+    },
+    {
+      "reason": "DAILY_LIMIT_EXCEEDED",
+      "category": "quota_exhausted"
+    },
+    {
+      "reason": "EMPTY_TOKEN",
+      "category": "auth_invalid"
+    },
+    {
+      "reason": "FORBIDDEN",
+      "category": "invalid_request"
+    },
+    {
+      "reason": "GROUP_DELETED",
+      "category": "api_key_invalid"
+    },
+    {
+      "reason": "GROUP_DISABLED",
+      "category": "api_key_invalid"
+    },
+    {
+      "reason": "GROUP_NOT_ALLOWED",
+      "category": "entitlement_missing"
+    },
+    {
+      "reason": "INSUFFICIENT_BALANCE",
+      "category": "quota_exhausted"
+    },
+    {
+      "reason": "INTERNAL",
+      "category": "unknown"
+    },
+    {
+      "reason": "INTERNAL_ERROR",
+      "category": "unknown"
+    },
+    {
+      "reason": "INVALID_ADMIN_KEY",
+      "category": "auth_invalid"
+    },
+    {
+      "reason": "INVALID_API_KEY",
+      "category": "api_key_invalid"
+    },
+    {
+      "reason": "INVALID_AUTH_HEADER",
+      "category": "auth_invalid"
+    },
+    {
+      "reason": "INVALID_CREDENTIALS",
+      "category": "auth_invalid"
+    },
+    {
+      "reason": "INVALID_INPUT",
+      "category": "invalid_request"
+    },
+    {
+      "reason": "INVALID_REQUEST",
+      "category": "invalid_request"
+    },
+    {
+      "reason": "INVALID_TOKEN",
+      "category": "auth_invalid"
+    },
+    {
+      "reason": "MAINTENANCE_MODE",
+      "category": "service_unavailable"
+    },
+    {
+      "reason": "MODEL_NOT_AVAILABLE_FOR_SOFTWARE_PACKAGE",
+      "category": "upgrade_required"
+    },
+    {
+      "reason": "MONTHLY_LIMIT_EXCEEDED",
+      "category": "quota_exhausted"
+    },
+    {
+      "reason": "NEED_ENABLE_BALANCE",
+      "category": "entitlement_missing"
+    },
+    {
+      "reason": "NOT_FOUND",
+      "category": "invalid_request"
+    },
+    {
+      "reason": "NO_PLAN_NO_BALANCE",
+      "category": "entitlement_missing"
+    },
+    {
+      "reason": "RATE_LIMITED",
+      "category": "rate_limited"
+    },
+    {
+      "reason": "REFRESH_TOKEN_EXPIRED",
+      "category": "auth_invalid"
+    },
+    {
+      "reason": "REFRESH_TOKEN_INVALID",
+      "category": "auth_invalid"
+    },
+    {
+      "reason": "REFRESH_TOKEN_REUSED",
+      "category": "auth_invalid"
+    },
+    {
+      "reason": "REQUEST_FAILED",
+      "category": "unknown"
+    },
+    {
+      "reason": "SERVER_ERROR",
+      "category": "service_unavailable"
+    },
+    {
+      "reason": "SERVICE_UNAVAILABLE",
+      "category": "service_unavailable"
+    },
+    {
+      "reason": "SOFTWARE_BILLING_COST_UNAVAILABLE",
+      "category": "upgrade_required"
+    },
+    {
+      "reason": "SOFTWARE_API_KEY_NOT_FOUND",
+      "category": "api_key_invalid"
+    },
+    {
+      "reason": "SOFTWARE_API_KEY_UNIFIED_DISABLED",
+      "category": "invalid_request"
+    },
+    {
+      "reason": "SOFTWARE_ENTITLEMENT_NOT_FOUND",
+      "category": "entitlement_missing"
+    },
+    {
+      "reason": "SOFTWARE_OAUTH_ACCESS_TOKEN_INVALID",
+      "category": "auth_expired"
+    },
+    {
+      "reason": "SOFTWARE_OAUTH_API_KEY_NOT_SUPPORTED",
+      "category": "entitlement_missing"
+    },
+    {
+      "reason": "SOFTWARE_OAUTH_AUTHORIZATION_EXPIRED",
+      "category": "auth_invalid"
+    },
+    {
+      "reason": "SOFTWARE_OAUTH_INVALID_CLIENT",
+      "category": "invalid_request"
+    },
+    {
+      "reason": "SOFTWARE_OAUTH_INVALID_CODE_CHALLENGE",
+      "category": "invalid_request"
+    },
+    {
+      "reason": "SOFTWARE_OAUTH_INVALID_GRANT",
+      "category": "invalid_request"
+    },
+    {
+      "reason": "SOFTWARE_OAUTH_INVALID_REDIRECT_URI",
+      "category": "invalid_request"
+    },
+    {
+      "reason": "SOFTWARE_OAUTH_INVALID_SCOPE",
+      "category": "invalid_request"
+    },
+    {
+      "reason": "SOFTWARE_OAUTH_MISSING_API_KEY",
+      "category": "auth_invalid"
+    },
+    {
+      "reason": "SOFTWARE_OAUTH_MISSING_AUTHORIZATION",
+      "category": "auth_invalid"
+    },
+    {
+      "reason": "SOFTWARE_OAUTH_MISSING_REFRESH_TOKEN",
+      "category": "invalid_request"
+    },
+    {
+      "reason": "SOFTWARE_OAUTH_NOT_READY",
+      "category": "service_unavailable"
+    },
+    {
+      "reason": "SOFTWARE_OAUTH_NO_USABLE_GROUP",
+      "category": "entitlement_missing"
+    },
+    {
+      "reason": "SOFTWARE_OAUTH_REFRESH_TOKEN_INVALID",
+      "category": "auth_expired"
+    },
+    {
+      "reason": "SOFTWARE_OAUTH_SESSION_NOT_FOUND",
+      "category": "invalid_request"
+    },
+    {
+      "reason": "SOFTWARE_OAUTH_UNSUPPORTED_CHALLENGE_METHOD",
+      "category": "invalid_request"
+    },
+    {
+      "reason": "SOFTWARE_OAUTH_UNSUPPORTED_GRANT_TYPE",
+      "category": "invalid_request"
+    },
+    {
+      "reason": "SOFTWARE_PRODUCT_CODES_REQUIRED",
+      "category": "invalid_request"
+    },
+    {
+      "reason": "SOFTWARE_PRODUCT_GROUP_REQUIRED",
+      "category": "invalid_request"
+    },
+    {
+      "reason": "SOFTWARE_PRODUCT_INVALID",
+      "category": "invalid_request"
+    },
+    {
+      "reason": "SOFTWARE_PRODUCT_NOT_ENTITLED",
+      "category": "entitlement_missing"
+    },
+    {
+      "reason": "SOFTWARE_PRODUCT_SOURCE_ORDER_REQUIRED",
+      "category": "invalid_request"
+    },
+    {
+      "reason": "SOFTWARE_PRODUCT_SOURCE_PLAN_REQUIRED",
+      "category": "invalid_request"
+    },
+    {
+      "reason": "SOFTWARE_PRODUCT_VALIDITY_REQUIRED",
+      "category": "invalid_request"
+    },
+    {
+      "reason": "SOFTWARE_TOKEN_LIMIT_30D_EXCEEDED",
+      "category": "quota_exhausted"
+    },
+    {
+      "reason": "SOFTWARE_TOKEN_LIMIT_5H_EXCEEDED",
+      "category": "quota_exhausted"
+    },
+    {
+      "reason": "SOFTWARE_TOKEN_LIMIT_7D_EXCEEDED",
+      "category": "quota_exhausted"
+    },
+    {
+      "reason": "SOFTWARE_TOKEN_LIMIT_DEEPSEEK_DAILY_EXCEEDED",
+      "category": "quota_exhausted"
+    },
+    {
+      "reason": "SOFTWARE_TOKEN_LIMIT_TOTAL_EXCEEDED",
+      "category": "quota_exhausted"
+    },
+    {
+      "reason": "SUBSCRIPTION_EXPIRED",
+      "category": "subscription_expired"
+    },
+    {
+      "reason": "SUBSCRIPTION_INVALID",
+      "category": "subscription_expired"
+    },
+    {
+      "reason": "SUBSCRIPTION_NOT_FOUND",
+      "category": "subscription_expired"
+    },
+    {
+      "reason": "SUBSCRIPTION_SUSPENDED",
+      "category": "subscription_suspended"
+    },
+    {
+      "reason": "TOKEN_EXPIRED",
+      "category": "auth_expired"
+    },
+    {
+      "reason": "TOKEN_REVOKED",
+      "category": "auth_invalid"
+    },
+    {
+      "reason": "UNAUTHENTICATED",
+      "category": "auth_invalid"
+    },
+    {
+      "reason": "UNAUTHORIZED",
+      "category": "auth_invalid"
+    },
+    {
+      "reason": "USAGE_LIMIT_EXCEEDED",
+      "category": "quota_exhausted"
+    },
+    {
+      "reason": "USER_BANNED",
+      "category": "account_disabled"
+    },
+    {
+      "reason": "USER_DELETED",
+      "category": "account_disabled"
+    },
+    {
+      "reason": "USER_INACTIVE",
+      "category": "account_disabled"
+    },
+    {
+      "reason": "USER_NOT_ACTIVE",
+      "category": "account_disabled"
+    },
+    {
+      "reason": "USER_NOT_FOUND",
+      "category": "auth_invalid"
+    },
+    {
+      "reason": "USER_PLATFORM_DAILY_QUOTA_EXHAUSTED",
+      "category": "quota_exhausted"
+    },
+    {
+      "reason": "USER_PLATFORM_MONTHLY_QUOTA_EXHAUSTED",
+      "category": "quota_exhausted"
+    },
+    {
+      "reason": "USER_PLATFORM_WEEKLY_QUOTA_EXHAUSTED",
+      "category": "quota_exhausted"
+    },
+    {
+      "reason": "USER_SUSPENDED",
+      "category": "account_disabled"
+    },
+    {
+      "reason": "WEEKLY_LIMIT_EXCEEDED",
+      "category": "quota_exhausted"
+    },
+    {
+      "reason": "api_key_in_query_deprecated",
+      "category": "invalid_request"
+    }
+  ],
+  "version": 1
+}

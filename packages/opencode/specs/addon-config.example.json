@@ -1,0 +1,44 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "addon": {
+    "enabled": true,
+    "paths": ["~/dev/my-addons"]
+  },
+  "marketplaces": {
+    "codex-curated": {
+      "source_type": "git",
+      "source": "https://github.com/openai/codex-curated.git",
+      "ref": "main",
+      "sparse_paths": ["plugins/hello", "plugins/echo"],
+      "last_revision": "abcdef1234567890",
+      "last_updated": "2025-05-09T14:30:00Z"
+    },
+    "local-dev": {
+      "source_type": "local",
+      "source": "/abs/path/to/marketplace"
+    }
+  },
+  "plugins": {
+    "hello@codex-curated": {
+      "enabled": true,
+      "mcp_servers": {
+        "echo": {
+          "enabled": true,
+          "default_tools_approval_mode": "prompt",
+          "enabled_tools": ["echo.run", "echo.ping"],
+          "disabled_tools": ["echo.dangerous"],
+          "tools": {
+            "echo.run": { "approval": "auto" },
+            "echo.ping": { "approval": "prompt" }
+          }
+        },
+        "stripe": {
+          "enabled": false
+        }
+      }
+    },
+    "experimental@local-dev": {
+      "enabled": false
+    }
+  }
+}
