@@ -123,6 +123,7 @@ jobs:
         working-directory: packages/desktop
         env:
           MODELS_DEV_API_JSON: ""
+          NODE_OPTIONS: --max-old-space-size=4096
           RUST_TARGET: ${{ matrix.target }}
           WANLAICODE_CHANNEL: prod
           WANLAICODE_DISPATCH_CHANNEL: prod
@@ -218,14 +219,18 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build unpacked Windows application without signing credentials
-        shell: bash
+        shell: pwsh
         working-directory: packages/desktop
         run: |
-          set -euo pipefail
+          $ErrorActionPreference = "Stop"
           bun run build
+          if ($LASTEXITCODE -ne 0) { throw "Desktop build failed" }
+          $env:PATH = "C:\Windows\System32;$env:PATH"
           npx electron-builder --win --x64 --dir --publish never --config electron-builder.config.ts
+          if ($LASTEXITCODE -ne 0) { throw "Windows packaging failed" }
         env:
           MODELS_DEV_API_JSON: ""
+          NODE_OPTIONS: --max-old-space-size=4096
           RUST_TARGET: x86_64-pc-windows-msvc
           WANLAICODE_CHANNEL: prod
           WANLAICODE_DISPATCH_CHANNEL: prod
