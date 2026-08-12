@@ -20,7 +20,7 @@
 
 </div>
 
-<img src="assets/readme-preview.png" alt="WanLai Code conceptual product visual" width="100%" />
+<img src="assets/readme-preview.en.png" alt="WanLai Code English interface preview" width="100%" />
 
 <p align="center"><sub>Conceptual product visual. The actual interface may change between releases.</sub></p>
 
