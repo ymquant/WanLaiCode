@@ -20,7 +20,7 @@
 
 </div>
 
-<img src="assets/readme-preview.png" alt="万来 Code 概念产品视觉图" width="100%" />
+<img src="assets/readme-preview.zh.png" alt="万来 Code 中文界面预览" width="100%" />
 
 <p align="center"><sub>概念产品视觉图，实际界面可能随版本更新而变化。</sub></p>
 
