@@ -4,7 +4,7 @@
 
 # WanLai Code
 
-### An open-source AI coding client for developers
+### An open-source Codex AI coding client built on OpenCode
 
 [简体中文](README.md) · [English](README.en.md)
 
@@ -26,7 +26,7 @@
 
 ## Overview
 
-WanLai Code is an AI coding client for macOS, Windows, Linux, and the command line. It helps developers understand code, edit files, run commands, and complete multi-step development tasks in one workspace.
+WanLai Code is an open-source Codex AI coding client built on OpenCode. It supports macOS, Windows, Linux, and the command line, helping developers understand code, edit files, run commands, and complete multi-step development tasks in one workspace.
 
 This repository contains the source code for the client, CLI, SDK, plugin interfaces, and public UI so the community can inspect, build, and contribute to the project.
 

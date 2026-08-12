@@ -4,7 +4,7 @@
 
 # 万来 Code
 
-### 面向开发者的开源 AI 编程客户端
+### 基于 OpenCode 构建的开源 Codex AI 编程客户端
 
 [简体中文](README.md) · [English](README.en.md)
 
@@ -26,7 +26,7 @@
 
 ## 项目介绍
 
-万来 Code 是一款支持 macOS、Windows、Linux 和命令行的 AI 编程客户端，帮助开发者在一个工作空间内理解代码、编辑文件、运行命令并完成多步骤开发任务。
+万来 Code（WanLai Code）是一款基于 OpenCode 构建的开源 Codex AI 编程客户端，支持 macOS、Windows、Linux 和命令行，帮助开发者在一个工作空间内理解代码、编辑文件、运行命令并完成多步骤开发任务。
 
 本仓库公开客户端、CLI、SDK、插件接口和公共 UI 的源码，方便社区审阅、构建和参与开发。
 
