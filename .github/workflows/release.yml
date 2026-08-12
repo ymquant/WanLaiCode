@@ -183,7 +183,7 @@ jobs:
           test -n "$app"
           codesign --verify --deep --strict "$app"
           spctl --assess --type execute "$app"
-          for dmg in dist/*.dmg; do xcrun stapler validate "$dmg"; done
+          xcrun stapler validate "$app"
 
       - name: Upload signed artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -292,11 +292,15 @@ jobs:
           $env:HTTPS_PROXY = $null
           $apps = @(Get-ChildItem windows-app -File -Filter *.exe)
           if ($apps.Count -ne 1) { throw "Expected exactly one top-level Windows application executable" }
-          $arguments = @($apps[0].FullName, "-key", $env:SIGNCLIENT_KEY)
+          $signingPath = Join-Path $env:RUNNER_TEMP "WanLaiCode.exe"
+          Copy-Item $apps[0].FullName $signingPath -Force
+          Get-FileHash -Algorithm SHA256 $signingPath | Out-Null
+          $arguments = @($signingPath, "-key", $env:SIGNCLIENT_KEY)
           if ($env:SIGNCLIENT_CERT_ID) { $arguments += @("-cert", $env:SIGNCLIENT_CERT_ID) }
           $output = & $env:SIGNCLIENT_PATH @arguments 2>&1
           $output | ForEach-Object { Write-Host $_ }
           if ($LASTEXITCODE -ne 0) { throw "SignClient failed for prepackaged application" }
+          Move-Item $signingPath $apps[0].FullName -Force
 
       - name: Verify signed Windows application
         shell: pwsh
@@ -422,11 +426,15 @@ jobs:
           $env:HTTPS_PROXY = $null
           $installers = @(Get-ChildItem windows-installer -File -Filter *.exe)
           if ($installers.Count -ne 1) { throw "Expected exactly one Windows installer" }
-          $arguments = @($installers[0].FullName, "-key", $env:SIGNCLIENT_KEY)
+          $signingPath = Join-Path $env:RUNNER_TEMP "WanLaiCode-Setup.exe"
+          Copy-Item $installers[0].FullName $signingPath -Force
+          Get-FileHash -Algorithm SHA256 $signingPath | Out-Null
+          $arguments = @($signingPath, "-key", $env:SIGNCLIENT_KEY)
           if ($env:SIGNCLIENT_CERT_ID) { $arguments += @("-cert", $env:SIGNCLIENT_CERT_ID) }
           $output = & $env:SIGNCLIENT_PATH @arguments 2>&1
           $output | ForEach-Object { Write-Host $_ }
           if ($LASTEXITCODE -ne 0) { throw "SignClient failed for Windows installer" }
+          Move-Item $signingPath $installers[0].FullName -Force
 
       - name: Verify Windows installer signature
         shell: pwsh
