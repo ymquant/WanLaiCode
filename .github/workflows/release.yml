@@ -362,7 +362,9 @@ jobs:
       - name: Package NSIS from signed prepackaged application
         shell: bash
         working-directory: packages/desktop
-        run: npx electron-builder --win nsis --x64 --prepackaged dist/win-unpacked --publish never --config electron-builder.config.ts
+        run: |
+          bun ./scripts/copy-icons.ts prod
+          npx electron-builder --win nsis --x64 --prepackaged dist/win-unpacked --publish never --config electron-builder.config.ts
         env:
           MODELS_DEV_API_JSON: ""
           RUST_TARGET: x86_64-pc-windows-msvc
