@@ -150,7 +150,7 @@
     },
     "packages/desktop": {
       "name": "@wanlaicode-ai/desktop",
-      "version": "0.1.8",
+      "version": "0.1.9",
       "dependencies": {
         "@opencode-ai/brand": "workspace:*",
         "drizzle-orm": "catalog:",
@@ -205,7 +205,7 @@
     },
     "packages/opencode": {
       "name": "opencode",
-      "version": "0.1.8",
+      "version": "0.1.9",
       "bin": {
         "wanlaicode": "./bin/opencode",
       },
