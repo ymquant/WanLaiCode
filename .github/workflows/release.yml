@@ -43,8 +43,19 @@ jobs:
             echo "::error::tag 不在 main 历史中"
             exit 1
           }
+          version="${TAG#v}"
+          desktop_version=$(node -p "require('./packages/desktop/package.json').version")
+          opencode_version=$(node -p "require('./packages/opencode/package.json').version")
+          [[ "$desktop_version" = "$version" ]] || {
+            echo "::error::desktop 包版本 $desktop_version 与 tag $TAG 不一致"
+            exit 1
+          }
+          [[ "$opencode_version" = "$version" ]] || {
+            echo "::error::opencode 包版本 $opencode_version 与 tag $TAG 不一致"
+            exit 1
+          }
           echo "sha=$(git rev-parse "refs/tags/${TAG}^{commit}")" >> "$GITHUB_OUTPUT"
-          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
 
   build-and-sign-unix:
     needs: verify-tag
