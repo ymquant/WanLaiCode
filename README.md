@@ -10,15 +10,11 @@
 
 [简体中文](README.md) · [English](README.en.md)
 
-[![Website](https://img.shields.io/badge/官网-wanlai.ai-000?style=flat-square)](https://wanlai.ai)
-[![Release](https://img.shields.io/github/v/release/ymquant/WanLaiCode?style=flat-square&color=000)](https://github.com/ymquant/WanLaiCode/releases)
-[![Issues](https://img.shields.io/github/issues/ymquant/WanLaiCode?style=flat-square&color=000)](https://github.com/ymquant/WanLaiCode/issues)
-[![License](https://img.shields.io/badge/license-MIT-000?style=flat-square)](LICENSE)
-
 [官网](https://wanlai.ai) ·
 [文档](https://doc.wanlai.ai/) ·
 [下载](https://github.com/ymquant/WanLaiCode/releases) ·
-[反馈](https://github.com/ymquant/WanLaiCode/issues)
+[参与贡献](CONTRIBUTING.md) ·
+[问题反馈](https://github.com/ymquant/WanLaiCode/issues)
 
 </div>
 
@@ -34,40 +30,16 @@
 
 本仓库公开客户端、CLI、SDK、插件接口和公共 UI 的源码，方便社区审阅、构建和参与开发。
 
-## 为什么值得一试
+## 核心体验
 
-<table>
-<tr>
-<td width="50%" valign="top">
-<h3>🎯 目标模式</h3>
-<p>给出目标后，Agent 会围绕目标继续检查、实现和验证；不必在每一步都手动发送“继续”。</p>
-</td>
-<td width="50%" valign="top">
-<h3>↪️ 运行中追加要求</h3>
-<p>任务还在执行时就能补充或修正要求。新的指令进入当前回合，已完成的工具结果和上下文不会丢失。</p>
-</td>
-</tr>
-<tr>
-<td width="50%" valign="top">
-<h3>⏰ 自动化任务</h3>
-<p>把固定提示和执行计划保存为自动化，让代码检查、日报整理和仓库维护等任务按时运行。</p>
-</td>
-<td width="50%" valign="top">
-<h3>🧩 插件、技能与 MCP</h3>
-<p>在客户端内管理插件、技能和 MCP 服务，把团队工具与专用工作流接入 Agent。</p>
-</td>
-</tr>
-<tr>
-<td width="50%" valign="top">
-<h3>🧠 全局与项目记忆</h3>
-<p>保存少量可复用的偏好和项目经验；不同会话可以按需读取，不必反复说明相同背景。</p>
-</td>
-<td width="50%" valign="top">
-<h3>📱 远程控制</h3>
-<p>从其他设备连接桌面端会话，查看任务状态并继续推进，适合长时间运行的开发任务。</p>
-</td>
-</tr>
-</table>
+| 能力 | 解决的问题 | 适合场景 |
+| --- | --- | --- |
+| 目标模式 | Agent 围绕目标继续检查、实现和验证，无需反复发送“继续” | 跨文件改动、完整功能、长时间任务 |
+| 运行中追加要求 | 任务执行期间直接补充或修正要求，保留已完成的工具结果和上下文 | 需求调整、Review 意见、临时约束 |
+| 自动化任务 | 保存提示词与执行计划，按时运行并保留结果 | 代码检查、日报、仓库维护 |
+| 插件、技能与 MCP | 在客户端内管理扩展，把团队工具和专用流程接入 Agent | 团队规范、内部工具、重复工作流 |
+| 全局与项目记忆 | 按需复用偏好和项目经验，减少重复说明 | 长期项目、多人协作、跨会话开发 |
+| 远程控制 | 从其他设备查看桌面端任务状态并继续推进 | 构建、测试和长时间运行任务 |
 
 ## 与 OpenCode 有什么不同
 
@@ -142,6 +114,18 @@ bun run build
 提交 PR 前请阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 和 [SECURITY.md](SECURITY.md)。来自 fork 的代码只会在无 Secret 的 GitHub-hosted runner 上执行；正式发版由受保护的独立流程完成。
 
 如果你发现安全问题，请按 [SECURITY.md](SECURITY.md) 中的私密渠道报告，不要创建公开 Issue。
+
+### 贡献者支持
+
+我们欢迎长期维护、功能开发、Bug 修复、测试、文档和本地化贡献。对于需求明确、能够合并并持续维护的贡献，项目会根据工作范围、实现质量和实际影响提供开发补贴；具体金额与交付范围请在开始开发前确认。
+
+| 贡献方向 | 示例 | 可提供的支持 |
+| --- | --- | --- |
+| 功能与体验 | Agent 工作流、桌面体验、跨平台能力 | 需求梳理、代码 Review、开发补贴 |
+| 稳定性与安全 | Bug 修复、测试、依赖与供应链安全 | 复现环境、技术协作、开发补贴 |
+| 文档与社区 | 使用文档、教程、本地化、社区答疑 | 内容 Review、署名与贡献记录 |
+
+有意参与可先创建 [GitHub Issue](https://github.com/ymquant/WanLaiCode/issues) 说明计划，也可以通过[万来官网](https://wanlai.ai)联系项目团队，获取微信或 Telegram 社区入口。请勿在公开 Issue 中留下私人联系方式。
 
 ## 开源许可与上游声明
 
