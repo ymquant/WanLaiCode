@@ -41,6 +41,46 @@
 | 全局与项目记忆 | 按需复用偏好和项目经验，减少重复说明 | 长期项目、多人协作、跨会话开发 |
 | 远程控制 | 从其他设备查看桌面端任务状态并继续推进 | 构建、测试和长时间运行任务 |
 
+## 从目标到交付，都在一个工作空间
+
+<table>
+<tr>
+<td width="50%" valign="top"><strong>目标模式</strong><br><sub>设定最终目标后，Agent 会持续分析、提问、执行和验证，直到目标完成或需要人工确认。</sub></td>
+<td width="50%" valign="top"><strong>自动化</strong><br><sub>将重复工作配置为计划任务，并统一管理模型、执行环境、通知与运行记录。</sub></td>
+</tr>
+<tr>
+<td><img src="assets/feature-goal-mode.png" alt="目标模式持续执行开发任务" width="100%" /></td>
+<td><img src="assets/feature-automations.png" alt="自动化任务配置和运行计划" width="100%" /></td>
+</tr>
+</table>
+
+### 插件市场
+
+在应用内发现、安装和管理插件，把浏览器、安全扫描等专业能力直接接入当前对话。
+
+<img src="assets/feature-plugin-marketplace.png" alt="万来 Code 插件市场" width="100%" />
+
+<table>
+<tr>
+<td width="50%" valign="top"><strong>Git 操作</strong><br><sub>无需离开应用即可查看变更、生成提交信息，并完成提交、推送和分支操作。</sub></td>
+<td width="50%" valign="top"><strong>代码 Review</strong><br><sub>将 Agent 的修改过程与代码差异并排展示，逐文件检查新增、删除和实现细节。</sub></td>
+</tr>
+<tr>
+<td><img src="assets/feature-git-commit.png" alt="内置 Git 提交界面" width="100%" /></td>
+<td><img src="assets/feature-code-review.png" alt="代码 Review 和 Diff 界面" width="100%" /></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><strong>文件管理</strong><br><sub>在会话旁浏览项目结构、搜索并打开文件，让代码阅读与执行结果保持在同一工作区。</sub></td>
+<td width="50%" valign="top"><strong>内置浏览器</strong><br><sub>由 Agent 打开和操作本地或在线页面，在应用内完成实现、预览、检查和调试闭环。</sub></td>
+</tr>
+<tr>
+<td><img src="assets/feature-file-manager.png" alt="项目文件树和代码预览" width="100%" /></td>
+<td><img src="assets/feature-built-in-browser.png" alt="应用内置浏览器预览本地网站" width="100%" /></td>
+</tr>
+</table>
+
+<p align="center"><sub>以上均为真实产品界面，使用演示项目拍摄；界面会随版本持续更新。</sub></p>
+
 ## 与 OpenCode 有什么不同
 
 万来 Code 不是对 OpenCode 简单换皮。它保留 OpenCode 的开源代理能力，同时沿着“桌面工作空间 + Codex 交互 + 可持续任务”继续开发。
@@ -117,13 +157,25 @@ bun run build
 
 ### 贡献者支持
 
-我们欢迎长期维护、功能开发、Bug 修复、测试、文档和本地化贡献。对于需求明确、能够合并并持续维护的贡献，项目会根据工作范围、实现质量和实际影响提供开发补贴；具体金额与交付范围请在开始开发前确认。
+我们欢迎长期维护、功能开发、Bug 修复、测试、文档和本地化贡献。对于需求明确、能够合并并持续维护的贡献，项目可根据工作范围、实现质量、实际影响和后续维护成本提供开发补贴。
 
 | 贡献方向 | 示例 | 可提供的支持 |
 | --- | --- | --- |
 | 功能与体验 | Agent 工作流、桌面体验、跨平台能力 | 需求梳理、代码 Review、开发补贴 |
 | 稳定性与安全 | Bug 修复、测试、依赖与供应链安全 | 复现环境、技术协作、开发补贴 |
 | 文档与社区 | 使用文档、教程、本地化、社区答疑 | 内容 Review、署名与贡献记录 |
+
+#### 补贴规则
+
+| 阶段 | 规则 |
+| --- | --- |
+| 申请 | 开始开发前创建 Issue，说明问题、方案、交付物和预计工作量，并明确申请开发补贴 |
+| 确认 | 维护者评估优先级、难度、影响和维护成本，书面确认范围、验收标准、补贴金额及结算方式后再开始 |
+| 交付 | 提交可 Review 的 PR，补齐必要测试和文档，并通过该模块负责人 Review、CI 与安全检查 |
+| 验收 | PR 合并且约定功能完成验证后视为验收；部分交付、范围变化或未达到标准时，由双方重新确认结果 |
+| 结算 | 按开工前确认的金额、方式和周期结算；未经确认自行开展的工作不自动产生补贴 |
+
+以下情况不纳入补贴：重复实现、抄袭或许可证不兼容内容；无法合并或无法维护的改动；绕过 Review、测试或安全规则；泄露密钥、个人信息或内部资料；未事先确认的大范围开发。
 
 有意参与可先创建 [GitHub Issue](https://github.com/ymquant/WanLaiCode/issues) 说明计划，也可以通过[万来官网](https://wanlai.ai)联系项目团队，获取微信或 Telegram 社区入口。请勿在公开 Issue 中留下私人联系方式。
 

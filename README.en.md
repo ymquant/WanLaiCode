@@ -41,6 +41,46 @@ This repository contains the source code for the client, CLI, SDK, plugin interf
 | Global and project memory | Reuses relevant preferences and project knowledge without repeating the same background | Long-lived projects, collaboration, work across sessions |
 | Remote control | Lets another device inspect and continue a desktop task | Builds, test suites, and long-running development work |
 
+## One workspace, from goal to delivery
+
+<table>
+<tr>
+<td width="50%" valign="top"><strong>Goal Mode</strong><br><sub>Set the outcome once. The agent keeps analyzing, asking questions, implementing, and verifying until the goal is complete or human input is required.</sub></td>
+<td width="50%" valign="top"><strong>Automations</strong><br><sub>Turn recurring work into scheduled tasks with managed models, execution environments, notifications, and run history.</sub></td>
+</tr>
+<tr>
+<td><img src="assets/feature-goal-mode.png" alt="Goal Mode continuing a development task" width="100%" /></td>
+<td><img src="assets/feature-automations.png" alt="Automation task configuration and schedule" width="100%" /></td>
+</tr>
+</table>
+
+### Plugin marketplace
+
+Discover, install, and manage extensions in the app, then bring capabilities such as browser control and security scanning directly into a conversation.
+
+<img src="assets/feature-plugin-marketplace.png" alt="WanLai Code plugin marketplace" width="100%" />
+
+<table>
+<tr>
+<td width="50%" valign="top"><strong>Git operations</strong><br><sub>Inspect changes, generate a commit message, and handle commits, pushes, and branches without leaving the app.</sub></td>
+<td width="50%" valign="top"><strong>Code review</strong><br><sub>View the agent's work beside the code diff and inspect additions, deletions, and implementation details file by file.</sub></td>
+</tr>
+<tr>
+<td><img src="assets/feature-git-commit.png" alt="Built-in Git commit interface" width="100%" /></td>
+<td><img src="assets/feature-code-review.png" alt="Code review and diff interface" width="100%" /></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><strong>File management</strong><br><sub>Browse the project tree, search, and open files beside the conversation so code and task output stay in one workspace.</sub></td>
+<td width="50%" valign="top"><strong>Built-in browser</strong><br><sub>Let the agent open and operate local or remote pages for an in-app implementation, preview, inspection, and debugging loop.</sub></td>
+</tr>
+<tr>
+<td><img src="assets/feature-file-manager.png" alt="Project file tree and code preview" width="100%" /></td>
+<td><img src="assets/feature-built-in-browser.png" alt="Built-in browser previewing a local website" width="100%" /></td>
+</tr>
+</table>
+
+<p align="center"><sub>All screenshots show the real product with demonstration projects. The interface continues to evolve between releases.</sub></p>
+
 ## How is it different from OpenCode?
 
 WanLai Code is not a simple rebrand. It preserves OpenCode's open-source agent foundation while developing further toward a desktop workspace, Codex-style interaction, and persistent development tasks.
@@ -117,13 +157,25 @@ If you discover a security issue, report it privately through the channel docume
 
 ### Contributor support
 
-We welcome long-term maintenance, feature development, bug fixes, testing, documentation, and localization. For well-scoped contributions that can be merged and maintained, the project may provide a development stipend based on scope, implementation quality, and practical impact. Please agree on the scope and stipend before starting substantial work.
+We welcome long-term maintenance, feature development, bug fixes, testing, documentation, and localization. For well-scoped contributions that can be merged and maintained, the project may provide a development stipend based on scope, implementation quality, practical impact, and ongoing maintenance cost.
 
 | Contribution area | Examples | Support available |
 | --- | --- | --- |
 | Product and UX | Agent workflows, desktop experience, cross-platform features | Scope definition, code review, development stipend |
 | Reliability and security | Bug fixes, tests, dependency and supply-chain security | Reproduction support, technical collaboration, development stipend |
 | Documentation and community | Guides, tutorials, localization, community support | Editorial review, attribution, contribution record |
+
+#### Stipend rules
+
+| Stage | Rule |
+| --- | --- |
+| Proposal | Before development starts, open an Issue describing the problem, approach, deliverables, estimated effort, and stipend request |
+| Agreement | A maintainer evaluates priority, difficulty, impact, and maintenance cost; work begins after scope, acceptance criteria, stipend, and payment method are confirmed in writing |
+| Delivery | Submit a reviewable PR with the required tests and documentation, then pass module-owner review, CI, and security checks |
+| Acceptance | Delivery is accepted after the PR is merged and the agreed behavior is verified; partial delivery or scope changes require a revised agreement |
+| Payment | Payment follows the amount, method, and schedule agreed before work begins; unapproved work does not automatically qualify for a stipend |
+
+Stipends do not cover duplicate implementations, plagiarism or license-incompatible material, changes that cannot be merged or maintained, attempts to bypass review/testing/security rules, leaks of secrets or personal/internal data, or substantial work started without prior agreement.
 
 To get involved, open a [GitHub Issue](https://github.com/ymquant/WanLaiCode/issues) with your proposal, or contact the team through the [WanLai website](https://wanlai.ai) for the WeChat or Telegram community entry. Do not post private contact details in a public issue.
 
