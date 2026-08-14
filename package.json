@@ -125,6 +125,7 @@
     "electron"
   ],
   "overrides": {
+    "@hono/node-server": "1.19.15",
     "@types/bun": "catalog:",
     "@types/node": "catalog:"
   },
