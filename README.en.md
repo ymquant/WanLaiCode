@@ -10,14 +10,10 @@ Built on OpenCode · Codex-style interaction · Desktop / CLI · macOS / Windows
 
 [简体中文](README.md) · [English](README.en.md)
 
-[![Website](https://img.shields.io/badge/website-wanlai.ai-000?style=flat-square)](https://wanlai.ai)
-[![Release](https://img.shields.io/github/v/release/ymquant/WanLaiCode?style=flat-square&color=000)](https://github.com/ymquant/WanLaiCode/releases)
-[![Issues](https://img.shields.io/github/issues/ymquant/WanLaiCode?style=flat-square&color=000)](https://github.com/ymquant/WanLaiCode/issues)
-[![License](https://img.shields.io/badge/license-MIT-000?style=flat-square)](LICENSE)
-
 [Website](https://wanlai.ai) ·
 [Documentation](https://doc.wanlai.ai/) ·
 [Download](https://github.com/ymquant/WanLaiCode/releases) ·
+[Contributing](CONTRIBUTING.md) ·
 [Feedback](https://github.com/ymquant/WanLaiCode/issues)
 
 </div>
@@ -34,40 +30,56 @@ On top of OpenCode's agent core, WanLai Code adds a fuller desktop workspace and
 
 This repository contains the source code for the client, CLI, SDK, plugin interfaces, and public UI so the community can inspect, build, and contribute to the project.
 
-## Why try WanLai Code?
+## Core experience
+
+| Capability | What it solves | Best suited for |
+| --- | --- | --- |
+| Goal Mode | Keeps the agent implementing and validating toward an outcome without repeated “continue” prompts | Cross-file changes, complete features, long-running tasks |
+| In-flight steering | Adds or corrects requirements during an active task while preserving completed tool results and context | Requirement changes, review feedback, new constraints |
+| Automations | Saves prompts with schedules and keeps a record of each run | Code checks, daily summaries, repository maintenance |
+| Plugins, skills, and MCP | Connects team tools and specialized workflows through managed extensions | Team conventions, internal tools, repeatable workflows |
+| Global and project memory | Reuses relevant preferences and project knowledge without repeating the same background | Long-lived projects, collaboration, work across sessions |
+| Remote control | Lets another device inspect and continue a desktop task | Builds, test suites, and long-running development work |
+
+## One workspace, from goal to delivery
 
 <table>
 <tr>
-<td width="50%" valign="top">
-<h3>🎯 Goal Mode</h3>
-<p>Define the outcome and let the agent continue implementing and validating it—without manually sending “continue” after every step.</p>
-</td>
-<td width="50%" valign="top">
-<h3>↪️ Steer while it runs</h3>
-<p>Add or correct requirements during an active task. New guidance joins the current turn without discarding completed tool results or context.</p>
-</td>
+<td width="50%" valign="top"><strong>Goal Mode</strong><br><sub>Set the outcome once. The agent keeps analyzing, asking questions, implementing, and verifying until the goal is complete or human input is required.</sub></td>
+<td width="50%" valign="top"><strong>Automations</strong><br><sub>Turn recurring work into scheduled tasks with managed models, execution environments, notifications, and run history.</sub></td>
 </tr>
 <tr>
-<td width="50%" valign="top">
-<h3>⏰ Automations</h3>
-<p>Save a prompt with a schedule for recurring work such as code checks, daily summaries, and repository maintenance.</p>
-</td>
-<td width="50%" valign="top">
-<h3>🧩 Plugins, skills, and MCP</h3>
-<p>Manage plugins, reusable skills, and MCP servers in the client to connect team tools and specialized workflows.</p>
-</td>
-</tr>
-<tr>
-<td width="50%" valign="top">
-<h3>🧠 Global and project memory</h3>
-<p>Keep a small set of reusable preferences and project knowledge that future sessions can load when relevant.</p>
-</td>
-<td width="50%" valign="top">
-<h3>📱 Remote control</h3>
-<p>Connect to a desktop session from another device to inspect status and continue long-running development work.</p>
-</td>
+<td><img src="assets/feature-goal-mode.png" alt="Goal Mode continuing a development task" width="100%" /></td>
+<td><img src="assets/feature-automations.png" alt="Automation task configuration and schedule" width="100%" /></td>
 </tr>
 </table>
+
+### Plugin marketplace
+
+Discover, install, and manage extensions in the app, then bring capabilities such as browser control and security scanning directly into a conversation.
+
+<img src="assets/feature-plugin-marketplace.png" alt="WanLai Code plugin marketplace" width="100%" />
+
+<table>
+<tr>
+<td width="50%" valign="top"><strong>Git operations</strong><br><sub>Inspect changes, generate a commit message, and handle commits, pushes, and branches without leaving the app.</sub></td>
+<td width="50%" valign="top"><strong>Code review</strong><br><sub>View the agent's work beside the code diff and inspect additions, deletions, and implementation details file by file.</sub></td>
+</tr>
+<tr>
+<td><img src="assets/feature-git-commit.png" alt="Built-in Git commit interface" width="100%" /></td>
+<td><img src="assets/feature-code-review.png" alt="Code review and diff interface" width="100%" /></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><strong>File management</strong><br><sub>Browse the project tree, search, and open files beside the conversation so code and task output stay in one workspace.</sub></td>
+<td width="50%" valign="top"><strong>Built-in browser</strong><br><sub>Let the agent open and operate local or remote pages for an in-app implementation, preview, inspection, and debugging loop.</sub></td>
+</tr>
+<tr>
+<td><img src="assets/feature-file-manager.png" alt="Project file tree and code preview" width="100%" /></td>
+<td><img src="assets/feature-built-in-browser.png" alt="Built-in browser previewing a local website" width="100%" /></td>
+</tr>
+</table>
+
+<p align="center"><sub>All screenshots show the real product with demonstration projects. The interface continues to evolve between releases.</sub></p>
 
 ## How is it different from OpenCode?
 
@@ -142,6 +154,30 @@ Run tests from the relevant package directory. The repository intentionally prev
 Before opening a pull request, read [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). Code from forks runs only on GitHub-hosted runners without access to secrets; official releases use a separate protected workflow.
 
 If you discover a security issue, report it privately through the channel documented in [SECURITY.md](SECURITY.md) instead of opening a public issue.
+
+### Contributor support
+
+We welcome long-term maintenance, feature development, bug fixes, testing, documentation, and localization. For well-scoped contributions that can be merged and maintained, the project may provide a development stipend based on scope, implementation quality, practical impact, and ongoing maintenance cost.
+
+| Contribution area | Examples | Support available |
+| --- | --- | --- |
+| Product and UX | Agent workflows, desktop experience, cross-platform features | Scope definition, code review, development stipend |
+| Reliability and security | Bug fixes, tests, dependency and supply-chain security | Reproduction support, technical collaboration, development stipend |
+| Documentation and community | Guides, tutorials, localization, community support | Editorial review, attribution, contribution record |
+
+#### Stipend rules
+
+| Stage | Rule |
+| --- | --- |
+| Proposal | Before development starts, open an Issue describing the problem, approach, deliverables, estimated effort, and stipend request |
+| Agreement | A maintainer evaluates priority, difficulty, impact, and maintenance cost; work begins after scope, acceptance criteria, stipend, and payment method are confirmed in writing |
+| Delivery | Submit a reviewable PR with the required tests and documentation, then pass module-owner review, CI, and security checks |
+| Acceptance | Delivery is accepted after the PR is merged and the agreed behavior is verified; partial delivery or scope changes require a revised agreement |
+| Payment | Payment follows the amount, method, and schedule agreed before work begins; unapproved work does not automatically qualify for a stipend |
+
+Stipends do not cover duplicate implementations, plagiarism or license-incompatible material, changes that cannot be merged or maintained, attempts to bypass review/testing/security rules, leaks of secrets or personal/internal data, or substantial work started without prior agreement.
+
+To get involved, open a [GitHub Issue](https://github.com/ymquant/WanLaiCode/issues) with your proposal, or contact the team through the [WanLai website](https://wanlai.ai) for the WeChat or Telegram community entry. Do not post private contact details in a public issue.
 
 ## License and upstream projects
 
