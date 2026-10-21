@@ -113,7 +113,7 @@
     "@hono/standard-validator": "0.1.5",
     "@hono/zod-validator": "catalog:",
     "@lydell/node-pty": "catalog:",
-    "@modelcontextprotocol/sdk": "1.27.1",
+    "@modelcontextprotocol/sdk": "1.32.0",
     "@octokit/graphql": "9.0.2",
     "@octokit/rest": "catalog:",
     "@openauthjs/openauth": "catalog:",
