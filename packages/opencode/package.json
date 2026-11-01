@@ -173,7 +173,7 @@
     "tree-sitter-powershell": "0.25.10",
     "turndown": "7.2.0",
     "ulid": "catalog:",
-    "undici": "7.29.0",
+    "undici": "7.30.1",
     "venice-ai-sdk-provider": "2.0.1",
     "vscode-jsonrpc": "8.2.1",
     "web-tree-sitter": "0.25.10",
